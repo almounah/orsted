@@ -1,0 +1,165 @@
+syntax = "proto3";
+
+package protobuf;
+
+option go_package = "orsted/protobuf/orstedrpc";
+
+message EmptyMessage {
+}
+
+message IdMessage {
+    string id = 1;
+}
+
+message ResultMessage {
+    int32 result = 1;
+}
+
+message ListenerReq {
+    string listenerType = 1;
+    string ip = 2;
+    string port = 3;
+    string certPath = 4;
+    string keyPath = 5;
+}
+
+message ListenerJob {
+    string id = 1;
+    string ip = 2;
+    string port = 3;
+    string listenerType = 4;
+    string certPath = 5;
+    string keyPath = 6;
+}
+
+message Session {
+    string id = 1;
+    string os = 2;
+    string hostname = 3;
+    string ip = 4;
+    string user = 5;
+    string integrity = 6;
+    string status = 7;
+    int64 lastseen = 8;
+    string transport = 9;
+    repeated string chain = 10;
+}
+
+message SessionReq {
+    string os = 1;
+    string hostname = 2;
+    string ip = 3;
+    string user = 4;
+    string integrity = 5;
+    string transport = 6;
+    repeated string chain = 9;
+}
+
+message ListenerJobList {
+    repeated ListenerJob listener = 1;
+}
+
+message SessionList {
+    repeated Session sessions = 1;
+}
+
+message TaskReq {
+    string beacondId = 1;
+    string command = 2;
+    bytes reqdata = 3;
+    string prettyCommand = 4;
+}
+
+message TaskRep {
+    string taskId = 1;
+    string state = 2;
+    bytes response = 3;
+}
+
+message Task {
+    string taskId = 1;
+    string beacondId = 2;
+    string state = 3;
+    string command = 4;
+    string prettyCommand = 5;
+    bytes reqdata = 6;
+    bytes response = 7;
+    int64 sentAt = 8;
+
+}
+
+message TaskList {
+    string beaconId = 1;
+    repeated Task tasks = 2;
+}
+
+
+message Socks {
+    string beaconId = 1;
+    string ip = 2;
+    string port = 3;
+    string status = 4;
+}
+
+//TODO find a way to host per listener
+message Host {
+    string filename = 1;
+    bytes  data = 2;
+}
+
+
+message RouteReq {
+    string beaconId = 1;
+    string subnet = 2;
+}
+
+message Route {
+    string RouteId = 1;
+    string beaconId = 2;
+    string subnet = 3;
+}
+
+message RouteList {
+    repeated Route routes = 1;
+}
+
+message HostList {
+    repeated Host hostlist = 1;
+}
+
+// Used For Server <-> CLI Client
+service OrstedRpc {
+
+    rpc StartListener(ListenerReq) returns (ListenerJob);
+    rpc ListListeners(EmptyMessage) returns (ListenerJobList);
+    rpc DeleteListener(ListenerJob) returns (EmptyMessage);
+
+    rpc ListSessions(EmptyMessage) returns (SessionList);
+    rpc GetSessionById(IdMessage) returns (Session);
+
+    rpc AddTask(TaskReq) returns (Task);
+    rpc ListTask(Session) returns (TaskList);
+    rpc GetSingleTask(Task) returns (Task);
+    
+    rpc StartSocks(Socks) returns (Socks);
+
+    rpc HostFile(Host) returns (ResultMessage);
+    rpc UnHostFile(Host) returns (ResultMessage);
+    rpc ViewHostFile(EmptyMessage) returns (HostList);
+
+    rpc AddRoute(RouteReq) returns (Route);
+    rpc DeleteRoute(Route) returns (ResultMessage);
+    rpc ListRoute(EmptyMessage) returns (RouteList);
+}
+
+message Envelope {
+    string type = 1 [json_name = "type"];
+    string id = 2 [json_name = "customerId"];
+    repeated string chain = 3 [json_name = "oldorders"];
+    bytes data = 4 [json_name = "data"];
+}
+
+message P2pEnvelope {
+    repeated string chain = 1;
+    bytes data = 2;
+}

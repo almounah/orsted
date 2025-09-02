@@ -1,0 +1,19 @@
+# Data used for https certificate
+DefaultHTTPSCert = "./data/cert.pem"
+DefaultHTTPSKey = "./data/key.pem"
+
+# Data used For grpc auth with the server
+# TODO
+
+# Windows Arsenal
+NetAssemblyPath = "./tools/windows/dotnet/"
+Ps1ScriptPath = "./tools/windows/ps1/"
+WindowsModulePath = "./tools/compiled-modules/windows/"
+
+# Linux Arsenal
+LinuxModulePath = "./tools/compiled-modules/linux/"
+
+# Command Info
+LinuxCommands = ["back", "load-module", "sleep", "interact", "session", "task", "shell", "socks", "pivot", "download", "upload", "run", "ls", "autoroute", "cat"]
+WindowsCommands = ["back", "load-module", "sleep", "interact", "session", "task", "shell", "socks", "inline-clr", "execute-assembly", "evasion", "run", "upload", "download", "pivot", "ps", "token", "runas", "ls", "autoroute", "procdump", "cat", "psexec", "powercliff"]
+GlobalCommands = ["hoster", "socks", "listener", "generate", "session", "task", "interact", "autoroute"]

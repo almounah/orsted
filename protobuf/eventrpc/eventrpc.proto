@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package protobuf;
+
+option go_package = "orsted/protobuf/eventrpc";
+
+message Notification {
+    string message = 1;
+}
+
+message SubscribeRequest {
+}
+
+service Notifier {
+  // Client subscribes to receive notifications
+  rpc Subscribe(SubscribeRequest) returns (stream Notification);
+}
+

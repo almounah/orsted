@@ -1,0 +1,18 @@
+{
+    "endpoints": {
+        "registerBeacon": "/MicrosoftUpdate/ShellEx/KB242742/32323",
+        "socksMessage": "/MicrosoftUpdate/ShellEx/KB242742/avatar_9090.png",
+        "autorouteMessage": "/MicrosoftUpdate/ShellEx/KB242742/mt.png",
+        "beaconTaskRetrieve": "/MicrosoftUpdate/ShellEx/KB242742/health",
+        "beaconTaskResultSend": "/MicrosoftUpdate/ShellEx/KB242742/medicalresults",
+        "hostEndpoint": "/MicrosoftUpdate/ShellEx/KB242742/host/"
+    },
+    "domain": "10.0.2.7",
+    "port": "80",
+    "interval": 2000,
+    "jitter": 500,
+    "headersHttp": {
+        "User-Agent": "mozilla",
+        "Origin": "https://google.com"
+    }
+}

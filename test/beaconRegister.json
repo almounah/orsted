@@ -1,0 +1,7 @@
+{
+    "os": "windows",
+    "ip": "10.10.10.10",
+    "hostname": "ABBY-PC",
+    "user": "abby",
+    "integrity": "LOW"
+}
