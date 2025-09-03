@@ -72,6 +72,7 @@ func SetGenerateBeaconCommand() {
 			address := strings.Split(beaconAddress, ":")
 			if len(address) != 2 {
 				fmt.Println("Address should be in the form IP:PORT")
+				return nil
 			}
 			beaconIP := address[0]
 			beaconPort := address[1]

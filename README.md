@@ -16,6 +16,9 @@ For full details and setup instructions, check the **Orsted documentation**:
 
 🌐 [Visit the Orsted Docs](https://almounah.github.io/orsted-doc/)
 
+
+![Orsted](orsted.gif)
+
 ---
 
 ## 🔗 Quick Links
