@@ -24,6 +24,7 @@ windowsmodules=(
   "token"
   "inline-clr"
   "runas"
+  "ps"
 )
 
 #sudo apt install protoc-gen-go-grpc
