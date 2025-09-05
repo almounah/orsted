@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net"
 	"os/exec"
+	"os/user"
 	"runtime"
 	"strconv"
 	"sync"
@@ -61,7 +62,12 @@ func (r *Route) InitialiseTunInterface() error {
 	tunName := "oss_" + r.BeaconId
 
 	// Command 1: sudo ip tuntap add user parrot mode tun <tunName>
-	cmd1 := exec.Command("ip", "tuntap", "add", "user", "parrot", "mode", "tun", tunName)
+
+	u, err := user.Current()
+	if err != nil {
+		return fmt.Errorf("failed to set tun device up %v", err)
+	}
+	cmd1 := exec.Command("ip", "tuntap", "add", "user", u.Username, "mode", "tun", tunName)
 	cmd1Out, err := cmd1.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("failed to add tun device: %v\nOutput: %s", err, string(cmd1Out))

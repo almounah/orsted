@@ -122,7 +122,7 @@ compile_windows_module() {
     module_name=$1
     module_dir="$modules_code_dir/$module_name"
     output_dir="$modules_compiled_dir/windows/$module_name.dll"
-    echo "[+] Compiling Linux Module $module_name"
+    echo "[+] Compiling Windows Module $module_name"
 
     if cd "$module_dir"; then
         GOOS=windows GOARCH=amd64 CGO_ENABLED=1 CC=x86_64-w64-mingw32-gcc \
