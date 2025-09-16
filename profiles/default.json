@@ -14,5 +14,9 @@
     "headersHttp": {
         "User-Agent": "mozilla",
         "Origin": "https://google.com"
-    }
+    },
+    "httpproxytype":"none",
+    "httpproxyurl":"",
+    "httpproxyusername":"",
+    "httpproxypassword":""
 }

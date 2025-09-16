@@ -23,14 +23,42 @@ func SetGenerateBeaconCommand() {
 			a.String("type", "http[|dll|svc] https[|dll|svc] tcp[|dll|svc] or smb[|dll|svc]")
 			a.String("address", "address for http or tcp")
 		},
+		Flags: func(f *grumble.Flags) {
+			f.String("t", "http-proxy-type", "none", "HTTP Proxy Type, can be HTTP or HTTPS")
+			f.String("a", "http-proxy-address", "", "URL for example 127.0.0.1:8080")
+			f.String("u", "http-proxy-username", "", "Proxy Username")
+			f.String("p", "http-proxy-password", "", "Proxy Password")
+		},
 		Completer: func(prefix string, args []string) []string {
-			transportListLinux := []string{"http", "https", "tcp"}
-			transportListWindows := []string{"http", "http_dll", "http_svc", 
-				                             "https", "https_dll", "https_svc", 
-				                             "tcp", "tcp_dll", "tcp_svc",
-				                             "smb", "smb_dll", "smb_svc"}
-			osList := []string{"windows", "linux"}
 			var suggestions []string
+
+			// 1. Flag completion
+			flagSuggestions := []string{
+				"--http-proxy-type",
+				"--http-proxy-address",
+				"--http-proxy-username",
+				"--http-proxy-password",
+			}
+
+			// complete flags
+			if strings.HasPrefix(prefix, "-") {
+				for _, f := range flagSuggestions {
+					if strings.HasPrefix(f, prefix) {
+						suggestions = append(suggestions, f)
+					}
+				}
+				return suggestions
+			}
+
+			// 2. Positional arguments (your existing logic)
+			transportListLinux := []string{"http", "https", "tcp"}
+			transportListWindows := []string{
+				"http", "http_dll", "http_svc",
+				"https", "https_dll", "https_svc",
+				"tcp", "tcp_dll", "tcp_svc",
+				"smb", "smb_dll", "smb_svc",
+			}
+			osList := []string{"windows", "linux"}
 
 			var modulesList []string
 			if len(args) == 0 {
@@ -49,13 +77,14 @@ func SetGenerateBeaconCommand() {
 					suggestions = append(suggestions, moduleName)
 				}
 			}
+
 			return suggestions
 		},
 		Run: func(c *grumble.Context) error {
 			beaconType := c.Args.String("type")
 			switch beaconType {
 			case "http", "http_dll", "http_svc", "https", "https_dll", "https_svc", "tcp", "tcp_dll", "tcp_svc",
-				 "smb", "smv_dll", "smb_svc":
+				"smb", "smb_dll", "smb_svc":
 				// supported type — proceed
 			default:
 				fmt.Println("unsupported beacon type")
@@ -77,7 +106,28 @@ func SetGenerateBeaconCommand() {
 			beaconIP := address[0]
 			beaconPort := address[1]
 
-			ldflags := fmt.Sprintf("-s -w -X main.Targetip=%s -X main.Targetport=%s", beaconIP, beaconPort)
+
+			// Get Proxy Stuff
+			proxyType := c.Flags.String("http-proxy-type")
+			if proxyType != "http" && proxyType != "https" && proxyType != "none" {
+				fmt.Println("Proxy should be http or https")
+				return nil
+			}
+
+			proxyAddress := c.Flags.String("http-proxy-address")
+			if proxyAddress != "" {
+				proxyAddressSplit := strings.Split(proxyAddress, ":")
+				if len(proxyAddressSplit) != 2 {
+					fmt.Println("Proxy Address should be in the form IP:PORT")
+					return nil
+				}
+			}
+
+			proxyUsername := c.Flags.String("http-proxy-username")
+			proxyPassword := c.Flags.String("http-proxy-password")
+
+
+			ldflags := fmt.Sprintf("-s -w -X main.Targetip=%s -X main.Targetport=%s -X main.HTTPProxyType=%s -X main.HTTPProxyURL=%s -X main.HTTPProxyUsername=%s -X main.HTTPProxyPassword=%s", beaconIP, beaconPort, proxyType, proxyAddress, proxyUsername, proxyPassword)
 			mainPath := fmt.Sprintf("beacon/main_%s.go", beaconType)
 			tags := fmt.Sprintf("-tags=%s", beaconType)
 

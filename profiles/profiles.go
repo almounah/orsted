@@ -10,19 +10,23 @@ import (
 var profile []byte
 
 type ProfileConfig struct {
-	Endpoints        map[string]string `json:"endpoints"`
-	Domain           string            `json:"domain"`
-	Port             string            `json:"port"`
-	Interval         int64             `json:"interval"`
-	Jitter           int64             `json:"jitter"`
-	HeadersHttp      map[string]string `json:"headersHttp"`
-	WinModulePath    string            `json:"windows-modules-path"`
+	Endpoints         map[string]string `json:"endpoints"`
+	Domain            string            `json:"domain"`
+	Port              string            `json:"port"`
+	Interval          int64             `json:"interval"`
+	Jitter            int64             `json:"jitter"`
+	HeadersHttp       map[string]string `json:"headersHttp"`
+	WinModulePath     string            `json:"windows-modules-path"`
+	HTTPProxyUrl      string            `json:"httpproxyurl"`
+	HTTPProxyUsername string            `json:"httpproxyusername"`
+	HTTPProxyPassword string            `json:"httpproxypassword"`
+	HTTPProxyType     string            `json:"httpproxytype"`
 }
 
 var Config ProfileConfig
 
 func InitialiseProfile() error {
-    utils.PrintInfo("Unmarshelling Profile Config")
+	utils.PrintInfo("Unmarshelling Profile Config")
 	err := json.Unmarshal(profile, &Config)
 	if err != nil {
 		return err

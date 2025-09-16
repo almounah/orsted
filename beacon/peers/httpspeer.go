@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"fmt"
 	"io"
+	"net"
 	"strconv"
 
 	"orsted/beacon/transport/customhttp"
@@ -70,8 +71,20 @@ func (hp *HTTPSPeer) SetPeerID(s string) string {
 func (hp *HTTPSPeer) SendRequest(dataToSend []byte) ([]byte, error) {
 	utils.Print(hp.Ip + ":" + hp.Port)
 
-	conn, err := tls.Dial("tcp", hp.Ip+":"+hp.Port, &tls.Config{
-		InsecureSkipVerify: true, // disable certificate verification (optional, not recommended for production)
+	var rawconn net.Conn
+	var err error
+	switch hp.Conf.HTTPProxyType {
+	case "http":
+		rawconn, err = customhttp.DialHTTPProxy(profiles.Config.HTTPProxyUrl, hp.Ip+":"+hp.Port, profiles.Config.HTTPProxyUsername, profiles.Config.HTTPProxyPassword)
+	case "https":
+		rawconn, err = customhttp.DialHTTPSProxy(profiles.Config.HTTPProxyUrl, hp.Ip+":"+hp.Port, profiles.Config.HTTPProxyUsername, profiles.Config.HTTPProxyPassword)
+	default:
+		rawconn, err = net.Dial("tcp", hp.Ip+":"+hp.Port)
+	}
+	utils.Print("Done Getting Proxy Conn")
+	utils.Print("Wrapping in HTTPS now")
+	conn := tls.Client(rawconn, &tls.Config{
+		InsecureSkipVerify: true, // for testing; verify cert in production
 	})
 	if err != nil {
 		panic(err)
@@ -142,7 +155,7 @@ func (hp *HTTPSPeer) PrepareAutorouteData(rawEnvelope []byte) ([]byte, error) {
 	request += "\r\n"
 	request += string(rawEnvelope) // Add the JSON body
 
-    return []byte(request), nil
+	return []byte(request), nil
 }
 
 func (hp *HTTPSPeer) CleanReqFromPeerProtocol(data []byte) (rawEnvelope []byte, err error) {
