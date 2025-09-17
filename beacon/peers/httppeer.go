@@ -69,7 +69,17 @@ func (hp *HTTPPeer) SetPeerID(s string) string {
 // Send Data to Peer and get response
 func (hp *HTTPPeer) SendRequest(dataToSend []byte) ([]byte, error) {
     utils.Print(hp.Ip + ":" + hp.Port)
-	conn, err := net.Dial("tcp", hp.Ip+":"+ hp.Port)
+	var conn net.Conn
+	var err error
+	switch hp.Conf.HTTPProxyType {
+	case "http":
+		conn, err = customhttp.DialHTTPProxy(profiles.Config.HTTPProxyUrl, hp.Ip+":"+hp.Port, profiles.Config.HTTPProxyUsername, profiles.Config.HTTPProxyPassword)
+	case "https":
+		conn, err = customhttp.DialHTTPSProxy(profiles.Config.HTTPProxyUrl, hp.Ip+":"+hp.Port, profiles.Config.HTTPProxyUsername, profiles.Config.HTTPProxyPassword)
+	default:
+		conn, err = net.Dial("tcp", hp.Ip+":"+ hp.Port)
+	}
+	utils.Print("Done Getting HTTP Proxy Conn")
 	if err != nil {
 		panic(err)
 	}

