@@ -274,7 +274,7 @@ func StartAutorouting(ctx context.Context) error {
 		fmt.Println("Error Accepting Yamux Conn", err)
 		return err
 	}
-	fmt.Println("Accepted Yamux Session successfully, will start handling")
+	utils.Print("Accepted Yamux Session successfully, will start handling")
 	go agent.HandleConn(conn)
 	}
 	return nil

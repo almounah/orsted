@@ -2,7 +2,6 @@ package autoroute
 
 import (
 	"encoding/binary"
-	"fmt"
 	"orsted/protobuf/orstedrpc"
 	"orsted/server/utils"
 
@@ -21,11 +20,11 @@ func HandleAutorouteMessage(e *orstedrpc.Envelope) *orstedrpc.Envelope {
 
 	}
 
-	fmt.Println("Received envelope", e)
-	fmt.Println("Received envelope Id", e.Id)
+	utils.PrintDebug("Received envelope", e)
+	utils.PrintDebug("Received envelope Id", e.Id)
 	var r *Route
 	for _, c := range ROUTE_LIST {
-		fmt.Println("BeaconId from Route List", c.BeaconId)
+		utils.PrintDebug("BeaconId from Route List", c.BeaconId)
 		if c.BeaconId == e.Id {
 			r = c
 		}
@@ -37,21 +36,21 @@ func HandleAutorouteMessage(e *orstedrpc.Envelope) *orstedrpc.Envelope {
 		return &res
 	}
 
-	fmt.Println("Locking Proxy")
+	utils.PrintDebug("Locking Proxy")
 	r.ProxyMu.Lock()
 	for r.ProxyMu == nil {
 		r.ProxyCond.Wait()
 	}
 	r.ProxyMu.Unlock()
-	fmt.Println("UnLocking Proxy")
+	utils.PrintDebug("UnLocking Proxy")
 
-	fmt.Println("Locking Agent")
+	utils.PrintDebug("Locking Agent")
 	r.AgentMu.Lock()
 	for r.Agent == nil {
 		r.AgentCond.Wait()
 	}
 	r.AgentMu.Unlock()
-	fmt.Println("UnLocking Agent")
+	utils.PrintDebug("UnLocking Agent")
 
 	SERVER_CONN := r.Agent
 	// Process based on envelope type.
@@ -59,7 +58,7 @@ func HandleAutorouteMessage(e *orstedrpc.Envelope) *orstedrpc.Envelope {
 	case "autorouteread":
 		utils.PrintDebug("Reading")
 		size, _ := binary.Varint(e.Data)
-		utils.PrintDebug("Socks Read: Reading Form buffer of size ", size)
+		utils.PrintDebug("Autoroute Read: Reading Form buffer of size ", size)
 		temp := make([]byte, size)
 		n, err := SERVER_CONN.Read(temp)
 		if err != nil {
@@ -91,10 +90,10 @@ func HandleAutorouteMessage(e *orstedrpc.Envelope) *orstedrpc.Envelope {
 		}
 	}
 
-	fmt.Println("------------------")
-	fmt.Println("Received Envelope ", e.Type, e.Data)
-	fmt.Println("Response Envelope ", res.Type, res.Data)
-	fmt.Println("------------------")
+	utils.PrintDebug("------------------")
+	utils.PrintDebug("Received Envelope ", e.Type, e.Data)
+	utils.PrintDebug("Response Envelope ", res.Type, res.Data)
+	utils.PrintDebug("------------------")
 
 	return &res
 }

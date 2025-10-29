@@ -5,7 +5,7 @@
         "autorouteMessage": "/MicrosoftUpdate/ShellEx/KB242742/mt.png",
         "beaconTaskRetrieve": "/MicrosoftUpdate/ShellEx/KB242742/health",
         "beaconTaskResultSend": "/MicrosoftUpdate/ShellEx/KB242742/medicalresults",
-        "hostEndpoint": "/MicrosoftUpdate/ShellEx/KB242742/host/"
+        "hostendpoint": "/MicrosoftUpdate/ShellEx/KB242742/host/"
     },
     "domain": "10.0.2.7",
     "port": "80",

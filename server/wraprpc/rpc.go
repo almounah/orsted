@@ -125,7 +125,7 @@ func (s* Server) UnHostFile(c context.Context, h *orstedrpc.Host) (*orstedrpc.Re
 func (s* Server) ViewHostFile(context.Context, *orstedrpc.EmptyMessage) (*orstedrpc.HostList, error) {
 	res, err := orsteddb.ViewHostedFileDb()
 	for _, h := range res.Hostlist {
-		h.Filename = profiles.Config.Endpoints["hostEndpoint"] + h.Filename
+		h.Filename = profiles.Config.Endpoints["hostendpoint"] + h.Filename
 	}
 	return res, err
 }
