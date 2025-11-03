@@ -15,7 +15,7 @@ func FetchEtwpEventWriteFull() uintptr {
 
 	procEtwEventWriteFull := NTDLL.NewProc("EtwEventWrite")
     pEtwEventWriteFullAddress := procEtwEventWriteFull.Addr()
-    fmt.Println(fmt.Sprintf("EtwEventWrite %0X", pEtwEventWriteFullAddress))
+    Println(fmt.Sprintf("EtwEventWrite %0X", pEtwEventWriteFullAddress))
 
     i := 0
     address := pEtwEventWriteFullAddress
@@ -23,12 +23,12 @@ func FetchEtwpEventWriteFull() uintptr {
     for {
         // CHeck Opcode
         opcode := *(*byte)(unsafe.Pointer(address))
-        fmt.Println(fmt.Sprintf("Opcode %0X", opcode))
+        Println(fmt.Sprintf("Opcode %0X", opcode))
         opcodePlusOne := *(*byte)(unsafe.Pointer(addressPlusOne))
-        fmt.Println(fmt.Sprintf("Opcode+1 %0X", opcodePlusOne))
+        Println(fmt.Sprintf("Opcode+1 %0X", opcodePlusOne))
         if opcode == byte(x64_RET_INSTRUCTION_OPCODE) && opcodePlusOne == byte(x64_INT3_INSTRUCTION_OPCODE){
             addresdebug := pEtwEventWriteFullAddress + uintptr(i)*uintptr(unsafe.Sizeof(byte(0)))
-            fmt.Println(fmt.Sprintf("Found ret address at %0x", addresdebug))
+            Println(fmt.Sprintf("Found ret address at %0x", addresdebug))
             break
         }
 
@@ -44,7 +44,7 @@ func FetchEtwpEventWriteFull() uintptr {
         opcodeAtI := *(*byte)(unsafe.Pointer(addressAtI))
         if opcodeAtI == byte(x64_CALL_INSTRUCTION_OPCODE) {
             callAddress = addressAtI
-            fmt.Println(fmt.Sprintf("Found call address at %0x", callAddress))
+            Println(fmt.Sprintf("Found call address at %0x", callAddress))
 
             break
         }

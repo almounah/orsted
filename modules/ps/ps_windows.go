@@ -2,9 +2,9 @@ package main
 
 import (
 	"bytes"
-	"fmt"
 	"io"
 	"unsafe"
+	"fmt"
 
 	"github.com/olekukonko/tablewriter"
 	"golang.org/x/sys/windows"
@@ -31,16 +31,16 @@ func ps() ([]byte, error){
         pid := fmt.Sprint(res.UniqueProcessID)
 
 		// Open Handle
-		fmt.Println("Opening Handle")
+		Println("Opening Handle")
 		gotHandle := true
 		handle, err := NtOpenProcess(windows.PROCESS_QUERY_LIMITED_INFORMATION, false, uint32(res.UniqueProcessID))
 		if err != nil {
-			fmt.Println("Error: ", err.Error())
+			Println("Error: ", err.Error())
 			gotHandle = false
 		}
-		fmt.Println("Opening Handle")
+		Println("Opening Handle")
 
-		fmt.Println("Getting Process Image")
+		Println("Getting Process Image")
         image := fmt.Sprintf("%s", uint16PtrToUTF8Bytes(res.ImageName.Buffer, int(res.ImageName.Length)))
 		if gotHandle {
 			image = getProcessImage(handle)
@@ -48,23 +48,23 @@ func ps() ([]byte, error){
 				image = fmt.Sprintf("%s", uint16PtrToUTF8Bytes(res.ImageName.Buffer, int(res.ImageName.Length)))
 			}
 		}
-		fmt.Println("Got Process Image")
+		Println("Got Process Image")
 
 		// Get Owner by checking token
-		fmt.Println("Getting Process owner")
+		Println("Getting Process owner")
 		owner := ""
 		if gotHandle {
 			owner,_ = getProcessOwner(handle)
 		}
-		fmt.Println("Got Process owner")
+		Println("Got Process owner")
 
 		// Get Arch
-		fmt.Println("Getting Process Arch")
+		Println("Getting Process Arch")
 		arch := ""
 		if gotHandle {
 			arch = getProcArch(handle)
 		}
-		fmt.Println("Got Process Arch")
+		Println("Got Process Arch")
 
 		// Close Handle
 		windows.CloseHandle(handle)
@@ -93,13 +93,13 @@ func getProcessImage(handle windows.Handle) string {
 	// Call NtQueryInformationProcess first time
 	status := NtQueryInformationProcess(handle, ProcessImageFileName, nil, 0, &uReturnLen1)
 	if status != nil {
-		fmt.Printf("NtQueryInformationProcess failed: %s\n", status)
+		Printf("NtQueryInformationProcess failed: %s\n", status)
 	}
 	if uReturnLen1 == 0 {
 		return "ERROR"
 	}
 	var processInfoUnicode []byte
-	fmt.Println("Populated stuff")
+	Println("Populated stuff")
 	for i := 0; i < int(uReturnLen1); i++ {
 		processInfoUnicode = append(processInfoUnicode, 0)
 	}
@@ -107,14 +107,14 @@ func getProcessImage(handle windows.Handle) string {
 	// Call NtQueryInformationProcess second time
 	status = NtQueryInformationProcess(handle, ProcessImageFileName, unsafe.Pointer(&processInfoUnicode[0]), uint32(len(processInfoUnicode)), &uReturnLen2)
 	if status != nil {
-		fmt.Printf("NtQueryInformationProcess failed: 0x%x\n", status)
+		Printf("NtQueryInformationProcess failed: 0x%x\n", status)
 		return "ERROR"
 	}
 
 	u := (*windows.NTUnicodeString)(unsafe.Pointer(&processInfoUnicode[0]))
     image := fmt.Sprintf("%s", uint16PtrToUTF8Bytes(u.Buffer, int(u.Length)))
 
-	fmt.Println("Native image path:", image)
+	Println("Native image path:", image)
 	return image
 }
 
@@ -128,7 +128,7 @@ func getProcessOwner(handle windows.Handle) (owner string, err error) {
 
 	tokenUser, err := getTokenOwner(token)
 	if err != nil {
-		fmt.Println("Error Getting owner", tokenUser)
+		Println("Error Getting owner", tokenUser)
 		return
 	}
 	owner, domain, _, err := tokenUser.User.Sid.LookupAccount("")
@@ -172,7 +172,7 @@ func IsWow64Process(handle windows.Handle) (bool, error) {
 	)
 	
 	if status != nil {
-		fmt.Printf("NtQueryInformationProcess failed: %s\n", status)
+		Printf("NtQueryInformationProcess failed: %s\n", status)
 		return false, fmt.Errorf("NtQueryInformationProcess failed: %s \n", status)
 	}
 

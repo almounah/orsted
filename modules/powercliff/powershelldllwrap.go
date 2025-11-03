@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	memorymodule "pwshexec/MemoryModule"
 	clr "pwshexec/go-buena-clr"
 	"syscall"
@@ -225,7 +224,7 @@ func PrintPowerShellInvokeErrors(pAppDomain *clr.AppDomain, vtPowerShellInstance
 }
 
 func GetFunctionAddressJIT(appDomain *clr.AppDomain, assemblyName string, className string, methodName string, nbarg uint32) (address uintptr, err error) {
-	fmt.Println("Will Call GetFunctionAddressJIT")
+	Println("Will Call GetFunctionAddressJIT")
 	pAssName, err := syscall.UTF16PtrFromString(assemblyName)
 	if err != nil {
 		return 0, err
@@ -240,7 +239,7 @@ func GetFunctionAddressJIT(appDomain *clr.AppDomain, assemblyName string, classN
 	}
 	var res uintptr = 0
 	var nb = nbarg
-	fmt.Println("Will do syscall on ", pProcGetJustInTimeMethodAddress)
+	Println("Will do syscall on ", pProcGetJustInTimeMethodAddress)
 	ret, _, _ := syscall.SyscallN(
 		pProcGetJustInTimeMethodAddress,
 		uintptr(unsafe.Pointer(appDomain)),
@@ -250,7 +249,7 @@ func GetFunctionAddressJIT(appDomain *clr.AppDomain, assemblyName string, classN
 		uintptr(unsafe.Pointer(&nb)),
 		uintptr(unsafe.Pointer(&res)),
 	)
-	fmt.Println("Done syscall ->", ret)
+	Println("Done syscall ->", ret)
 	if ret != 0 && ret != 1 {
 		return res, syscall.Errno(ret)
 	}

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"syscall"
 
 	"golang.org/x/sys/windows"
@@ -21,7 +20,7 @@ func SePrivEnable(s string) error {
 	err := windows.LookupPrivilegeValue(nil, windows.StringToUTF16Ptr(s), &luid)
 	if err != nil {
 		// {{if .Config.Debug}}
-		log.Println("LookupPrivilegeValueW failed", err)
+		Println("LookupPrivilegeValueW failed", err)
 		// {{end}}
 		return err
 	}
@@ -32,7 +31,7 @@ func SePrivEnable(s string) error {
 	err = windows.AdjustTokenPrivileges(tokenHandle, false, &privs, 0, nil, nil)
 	if err != nil {
 		// {{if .Config.Debug}}
-		log.Println("AdjustTokenPrivileges failed", err)
+		Println("AdjustTokenPrivileges failed", err)
 		// {{end}}
 		return err
 	}

