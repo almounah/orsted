@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	debugger "pwshexec/debug"
 	clr "pwshexec/go-buena-clr"
 )
 
@@ -12,7 +13,7 @@ var AppDomain *clr.AppDomain
 func Startpowershell() (*clr.AppDomain, clr.Variant, error) {
 	icorhost, err := clr.LoadCLR("v4")
 	if err != nil {
-		Println(err)
+		debugger.Println(err)
 	}
 
 	appDomain, err := clr.GetAppDomain(icorhost)
@@ -28,19 +29,19 @@ func Startpowershell() (*clr.AppDomain, clr.Variant, error) {
 
 func ExecuteScript(appDomain *clr.AppDomain, vtPowershell clr.Variant, script string) (string, error) {
 
-	Println("Adding script")
+	debugger.Println("Adding script")
 	_, err := PowerShellAddScript(appDomain, vtPowershell, script)
 	if err != nil && err.Error() != "The operation completed successfully." {
 		return err.Error(), err
 	}
 
-	Println("Adding COmmand")
+	debugger.Println("Adding COmmand")
 	_, err = PowerShellAddCommand(appDomain, vtPowershell, "Out-String")
 	if err != nil && err.Error() != "The operation completed successfully." {
 		return err.Error(), err
 	}
 
-	Println("Invoking")
+	debugger.Println("Invoking")
 	vtInvokeResult, err := PowerShellInvoke(appDomain, vtPowershell)
 	if err != nil && err.Error() != "The operation completed successfully." {
 		return err.Error(), err
@@ -51,7 +52,7 @@ func ExecuteScript(appDomain *clr.AppDomain, vtPowershell clr.Variant, script st
 	}
 
 	var res string
-	Println("Invoking Result Print")
+	debugger.Println("Invoking Result Print")
 	out, err := PrintPowerShellInvokeResult(appDomain, vtInvokeResult)
 	if err != nil && err.Error() != "The operation completed successfully." {
 		return err.Error(), err
@@ -67,7 +68,7 @@ func ExecuteScript(appDomain *clr.AppDomain, vtPowershell clr.Variant, script st
 	res += ers
 	res += "\n\n"
 
-	Println("Invoking Info Print")
+	debugger.Println("Invoking Info Print")
 	inf, err := PrintPowerShellInvokeInformation(appDomain, vtPowershell)
 	if err != nil && err.Error() != "The operation completed successfully." {
 		return err.Error(), err
@@ -75,12 +76,12 @@ func ExecuteScript(appDomain *clr.AppDomain, vtPowershell clr.Variant, script st
 	res += inf
 
 	//err = clr.VariantClear(&vtInvokeResult)
-	Println("Invoking Clear Errors")
+	debugger.Println("Invoking Clear Errors")
 	_, err = PowerShellClearErrors(appDomain, vtPowershell)
 	if err != nil && err.Error() != "The operation completed successfully." {
 		return err.Error(), err
 	}
-	Println("Invoking Clear Commands")
+	debugger.Println("Invoking Clear Commands")
 	_, err = PowerShellClear(appDomain, vtPowershell)
 	if err != nil && err.Error() != "The operation completed successfully." {
 		return err.Error(), err
@@ -94,10 +95,10 @@ func ExecuteScript(appDomain *clr.AppDomain, vtPowershell clr.Variant, script st
 
 func PatchManagedFunction(appDomain *clr.AppDomain, assemblyName string, className string, methodName string, nbarg uint32, bufbyte []byte) error {
 	addr, err := GetFunctionAddressJIT(appDomain, assemblyName, className, methodName, nbarg)
-	Println(fmt.Sprintf("Address of %s", methodName))
-	Println(fmt.Sprintf("%0x", addr))
+	debugger.Println(fmt.Sprintf("Address of %s", methodName))
+	debugger.Println(fmt.Sprintf("%0x", addr))
 	if err != nil && err.Error() != "The operation completed successfully." {
-		Println("Error while patching function ->", err.Error())
+		debugger.Println("Error while patching function ->", err.Error())
 		return err
 	}
 	return PatchFunction(addr, bufbyte)

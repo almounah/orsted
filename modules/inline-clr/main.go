@@ -7,6 +7,7 @@ import "C"
 
 import (
 	"errors"
+	"inline-clr/debugger"
 	"sync"
 )
 
@@ -34,7 +35,7 @@ func InitialiseTask(task *Task) error {
 }
 
 func TaskHandler(task *Task) (stdout []byte, err error) {
-    Println("Task Action is ---->", task.TaskAction)
+    debugger.Println("Task Action is ---->", task.TaskAction)
 	switch task.TaskAction {
 	case "start-clr":
         stdout, err := startCLR()
@@ -54,11 +55,11 @@ func TaskHandler(task *Task) (stdout []byte, err error) {
         return stdout, err
 	}
 	if err != nil {
-		Println("Fail")
+		debugger.Println("Fail")
 	}
-	Println("Done Executing")
-	Println("Result From DLL --->")
-	Println(string(stdout))
+	debugger.Println("Done Executing")
+	debugger.Println("Result From DLL --->")
+	debugger.Println(string(stdout))
     task.status = "completed"
     return []byte(""), errors.New("Invalid Task Action")
 }
