@@ -25,6 +25,7 @@ windowsmodules=(
   "inline-clr"
   "runas"
   "ps"
+  "winrm"
 )
 
 #sudo apt install protoc-gen-go-grpc

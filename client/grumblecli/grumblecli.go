@@ -84,6 +84,8 @@ func addSingleCommandFromString(commandString string, conn grpc.ClientConnInterf
 		SetPsExecCommand(conn)
 	case "powercliff":
 		SetPowercliffCommand(conn)
+	case "winrm":
+		SetWinrmCommand(conn)
 	case "help":
 		// Use default grumble help
 		return

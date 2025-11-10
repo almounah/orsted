@@ -15,5 +15,5 @@ LinuxModulePath = "./tools/compiled-modules/linux/"
 
 # Command Info
 LinuxCommands = ["back", "load-module", "sleep", "interact", "session", "task", "shell", "socks", "pivot", "download", "upload", "run", "ls", "autoroute", "cat"]
-WindowsCommands = ["back", "load-module", "sleep", "interact", "session", "task", "shell", "socks", "inline-clr", "execute-assembly", "evasion", "run", "upload", "download", "pivot", "ps", "token", "runas", "ls", "autoroute", "procdump", "cat", "psexec", "powercliff"]
+WindowsCommands = ["back", "load-module", "sleep", "interact", "session", "task", "shell", "socks", "inline-clr", "execute-assembly", "evasion", "run", "upload", "download", "pivot", "ps", "token", "runas", "ls", "autoroute", "procdump", "cat", "psexec", "powercliff", "winrm"]
 GlobalCommands = ["hoster", "socks", "listener", "generate", "session", "task", "interact", "autoroute"]
