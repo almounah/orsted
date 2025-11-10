@@ -100,7 +100,7 @@ func (e *Encryption) Post(client *Client, message *soap.SoapMessage) (string, er
 
 	var err error
 	if err = e.PrepareRequest(client, client.url); err == nil {
-		debugger.Println("Preparing Request for NTLM")
+		//debugger.Println("Preparing Request for NTLM")
 		return e.PrepareEncryptedRequest(client, client.url, []byte(message.String()))
 	} else {
 		debugger.Println("Posting Request")
@@ -192,7 +192,7 @@ func (e *Encryption) PrepareEncryptedRequest(client *Client, endpoint string, me
 	}
 
 	body, err := e.ParseEncryptedResponse(resp)
-	debugger.Println("Body Of NTLM Encrypted Prepared response ---> ", string(body))
+	//debugger.Println("Body Of NTLM Encrypted Prepared response ---> ", string(body))
 
 	return string(body), err
 }

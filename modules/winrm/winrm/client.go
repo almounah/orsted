@@ -80,10 +80,23 @@ func readCACerts(certs []byte) (*x509.CertPool, error) {
 // CreateShell will create a WinRM Shell,
 // which is the prealable for running commands.
 func (c *Client) CreateShell() (*Shell, error) {
-	request := NewOpenShellRequest(c.url, &c.Parameters)
+	request, sessionId, runspaceId, pipelineId := NewOpenPowerShellRequest(c.url, &c.Parameters)
+	debugger.Println("In CreateShell RunspaceID ->", runspaceId)
+	debugger.Println("In CreateShell PipelineId ->", pipelineId)
+
+	debugger.Println("Request Create PowerShell Request")
+	debugger.Println("---------------------------------")
+	debugger.Println(request.String())
+	debugger.Println("---------------------------------")
 	defer request.Free()
 
 	response, err := c.sendRequest(request)
+	debugger.Println()
+	debugger.Println()
+	debugger.Println("Response Create PowerShell Request")
+	debugger.Println("---------------------------------")
+	debugger.Println(response)
+	debugger.Println("---------------------------------")
 	if err != nil {
 		return nil, err
 	}
@@ -93,12 +106,12 @@ func (c *Client) CreateShell() (*Shell, error) {
 		return nil, err
 	}
 
-	return c.NewShell(shellID), nil
+	return c.NewShell(shellID, sessionId, runspaceId, pipelineId), nil
 }
 
 // NewShell will create a new WinRM Shell for the given shellID
-func (c *Client) NewShell(id string) *Shell {
-	return &Shell{client: c, id: id}
+func (c *Client) NewShell(id string, sessionId, runspaceId, pipelineId string) *Shell {
+	return &Shell{client: c, id: id, sessionId: sessionId, runspaceId: runspaceId, pipelineId: pipelineId}
 }
 
 // sendRequest exec the custom http func from the client

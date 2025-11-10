@@ -35,6 +35,7 @@ const (
 	NSP_SCHEMA_INST = "xsi"
 	NSP_WIN_SHELL   = "rsp"
 	NSP_WSMAN_FAULT = "f"
+	NSP_WSMAN_WSMV = "wsmv"
 )
 
 // DOM Namespaces
@@ -51,6 +52,7 @@ var (
 	DOM_NS_SCHEMA_INST = dom.Namespace{Prefix: NSP_SCHEMA_INST, Uri: NS_SCHEMA_INST}
 	DOM_NS_WIN_SHELL   = dom.Namespace{Prefix: NSP_WIN_SHELL, Uri: NS_WIN_SHELL}
 	DOM_NS_WSMAN_FAULT = dom.Namespace{Prefix: NSP_WSMAN_FAULT, Uri: NS_WSMAN_FAULT}
+	DOM_NS_WSMAN_WSMV = dom.Namespace{Prefix: NSP_WSMAN_WSMV, Uri: NS_WSMAN_MSFT}
 )
 
 var MostUsed = [...]dom.Namespace{

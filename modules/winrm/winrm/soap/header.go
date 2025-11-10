@@ -22,6 +22,7 @@ type SoapHeader struct {
 	timeout         string
 	locale          string
 	id              string
+	sessionId       string
 	action          string
 	shellID         string
 	resourceURI     string
@@ -36,6 +37,7 @@ type HeaderBuilder interface {
 	Timeout(string) *SoapHeader
 	Locale(string) *SoapHeader
 	Id(string) *SoapHeader
+	SessionId(string) *SoapHeader
 	Action(string) *SoapHeader
 	ShellId(string) *SoapHeader
 	resourceURI(string) *SoapHeader
@@ -67,6 +69,11 @@ func (sh *SoapHeader) Timeout(timeout string) *SoapHeader {
 //nolint:stylecheck // Should be ShellID, but we stay compatible
 func (sh *SoapHeader) Id(id string) *SoapHeader {
 	sh.id = id
+	return sh
+}
+
+func (sh *SoapHeader) SessionId(id string) *SoapHeader {
+	sh.sessionId = id
 	return sh
 }
 
@@ -128,6 +135,12 @@ func (sh *SoapHeader) Build() *SoapMessage {
 	if sh.id != "" {
 		id := sh.createElement(header, "MessageID", DOM_NS_ADDRESSING)
 		id.SetContent(sh.id)
+	}
+
+	if sh.sessionId != "" {
+		// TODO: MAy introduce bug with namespace
+		id := sh.createElement(header, "SessionId", DOM_NS_WSMAN_WSMV)
+		id.SetContent(sh.sessionId)
 	}
 
 	if sh.locale != "" {

@@ -7,6 +7,7 @@ require (
 	github.com/ChrisTrenkamp/goxpath v0.0.0-20210404020558-97928f7e12b6
 	github.com/bodgit/ntlmssp v0.0.0-20240506230425-31973bb52d9b
 	github.com/gofrs/uuid v4.4.0+incompatible
+	github.com/google/uuid v1.6.0
 	github.com/jcmturner/gokrb5/v8 v8.4.4
 	github.com/masterzen/simplexml v0.0.0-20190410153822-31eea3082786
 	golang.org/x/text v0.16.0
