@@ -105,7 +105,12 @@ type Shell struct {
 }
 
 type Receive struct {
-	DesiredStream string `xml:"rsp:DesiredStream"`
+    DesiredStream DesiredStream `xml:"rsp:DesiredStream"`
+}
+
+type DesiredStream struct {
+	CommandId string `xml:"CommandId,attr,omitempty"`
+    Value     string `xml:",chardata"`
 }
 
 type CommandLine struct {
@@ -234,7 +239,7 @@ func CreateReceiveRequest(commandId, shellID, messageId, sessionId string) *Enve
 	header := createBaseHeader(
 		"http://schemas.microsoft.com/wbem/wsman/1/windows/shell/Receive",
 		"uuid:"+messageId,
-		"PT1S",
+		"PT20S",
 		"uuid:"+sessionId,
 	)
 
@@ -264,10 +269,13 @@ func CreateReceiveRequest(commandId, shellID, messageId, sessionId string) *Enve
 		WSMV:  "http://schemas.microsoft.com/wbem/wsman/1/wsman.xsd",
 		Header: header,
 		Body: Body{
-			Receive: &Receive{
-				DesiredStream: "stdout",
-			},
-		},
+            Receive: &Receive{
+                DesiredStream: DesiredStream{
+                    CommandId: commandId,
+                    Value:     "stdout",
+                },
+            },
+        },
 	}
 }
 

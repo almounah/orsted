@@ -1,12 +1,12 @@
 package main
 
 import (
-	"fmt"
-	"strconv"
-	"strings"
+	"bytes"
+	"context"
+	"time"
 	"winrm/debugger"
+	gowinrm "winrm/winrm"
 )
-
 
 func ExecuteWinrmCommandLocalUsernamePassword(host string, port int, tls bool, insecure bool, username string, password string, command string) (stdout []byte, err error) {
 	debugger.Println("AuthType Local")
@@ -31,36 +31,37 @@ func ExecuteWinrmCommandNTLMUsernamePassword(host string, port int, tls bool, in
 	debugger.Println("Password:", password)
 	debugger.Println("Command:", command)
 
-	shell := NewWinRMShell(
-		"http://" + host + ":" + strconv.Itoa(port) + "/wsman",
-		"",
-		username,
-		password,
-	)
+	connectTimeout, err := time.ParseDuration("5s")
 
-	// Step 1: Create the PowerShell shell (performs NTLM handshake)
-	if err = shell.CreateShell(); err != nil {
-		fmt.Printf("Error creating shell: %v\n", err)
-		return []byte(err.Error()), err
-	}
+	endpoint := gowinrm.NewEndpoint(host, port, tls, insecure, nil, nil, nil, connectTimeout)
 
-	// Step 2: Execute a command (uses encrypted channel)
-	commandID, err := shell.ExecuteCommand("Get-ChildItem")
+	encryption, err := gowinrm.NewEncryption("ntlm")
+
+	params := gowinrm.DefaultParameters
+
+
+	params.TransportDecorator = func() gowinrm.Transporter { return encryption }
+
+
+	client, err := gowinrm.NewClientWithParameters(endpoint, username, password, params)
+
 	if err != nil {
-		fmt.Printf("Error executing command: %v\n", err)
-		return []byte(err.Error()), err
-	}
 
-	// Step 3: Receive output (uses encrypted channel)
-	stdoutStr, err := shell.ReceiveOutput(commandID)
+		debugger.Println("Error In New Client", err.Error())
+
+		return nil, err
+
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	var stdoutBuf, stderrBuf bytes.Buffer
+	_, err = client.RunWithContext(ctx, command, &stdoutBuf, &stderrBuf)
 	if err != nil {
-		fmt.Printf("Error receiving output: %v\n", err)
-		return []byte(err.Error()), err
+		debugger.Println("Error with RunwithContext", err.Error())
+		return nil, err
 	}
 
-	s := strings.Join(stdoutStr, "\n") // concatenate all strings
-    stdout = []byte(s)
-
+	stdout = append(stdoutBuf.Bytes(), stderrBuf.Bytes()...)
 
 	return stdout, nil
 }
