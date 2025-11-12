@@ -1,10 +1,10 @@
 package gowinrm
 
 import (
-	"fmt"
 	"io"
+	"winrm/debugger"
 	"winrm/mspsrp"
-
+	"winrm/pwshxml"
 )
 
 type ExecuteCommandError struct {
@@ -29,26 +29,28 @@ func (b *ExecuteCommandError) Unwrap() error {
 	return b.Inner
 }
 
-
-
-func newExecuteCommandError(response string, format string, args ...interface{}) *ExecuteCommandError {
-	return &ExecuteCommandError{fmt.Errorf(format, args...), response}
-}
-
-
-
 // ParseSlurpOutputErrResponse ParseSlurpOutputErrResponse
 func ParseSlurpOutputErrResponse(response string, stdout, stderr io.Writer) (bool, int, error) {
 
 	stdoutByte, stderrByte, exitcode, done, err := mspsrp.ParseReceiveOutput([]byte(response))
-	for _, node := range stdoutByte {
-		stdout.Write([]byte(node))
+	debugger.Println("Stdout Streams: ", stdoutByte)
+	debugger.Println("Stderr Streams: ", stderrByte)
+
+	cleanStdout, err := pwshxml.DecodeStreams(stdoutByte)
+	debugger.Println("Error While Stdout Decoding ", err)
+	for _, line := range cleanStdout {
+		debugger.Println("Stdout: ", line)
+		stdout.Write([]byte(line))
+		stdout.Write([]byte("\n"))
 	}
 
-	for _, node := range stderrByte {
-		stderr.Write([]byte(node))
+	cleanStderr, err := pwshxml.DecodeStreams(stderrByte)
+	debugger.Println("Error While Stderr Decoding ", err)
+	for _, line := range cleanStderr {
+		debugger.Println("Stderr: ", line)
+		stderr.Write([]byte(line))
+		stderr.Write([]byte("\n"))
 	}
 
 	return done, exitcode, err
 }
-
