@@ -70,8 +70,9 @@ func (s *Shell) ExecuteWithContext(ctx context.Context, command string, argument
 
 // Close will terminate this shell. No commands can be issued once the shell is closed.
 func (s *Shell) Close() error {
-	request := NewDeleteShellRequest(s.Client.url, s.Id, &s.Client.Parameters)
+	messageId := uuid.New().String()
+	request, err := mspsrp.EnvelopeToString(mspsrp.DeleteShellRequest(s.Id, messageId, s.SessionID))
 
-	_, err := s.Client.sendRequest([]byte(request))
+	_, err = s.Client.sendRequest([]byte(request))
 	return err
 }

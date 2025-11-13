@@ -279,6 +279,38 @@ func CreateReceiveRequest(commandId, shellID, messageId, sessionId string) *Enve
 	}
 }
 
+// DeleteShellRequest creates a SOAP envelope to delete a WinRM shell
+func DeleteShellRequest(shellID, messageID, sessionID string) *Envelope {
+	header := createBaseHeader(
+		"http://schemas.xmlsoap.org/ws/2004/09/transfer/Delete",
+		"uuid:"+messageID,
+		"PT1S",
+		"uuid:"+sessionID,
+	)
+
+	header.OptionSet = OptionSet{
+		MustUnderstand: "true",
+	}
+
+	header.SelectorSet = &SelectorSet{
+		Selector: []Selector{
+			{
+				Name:  "ShellId",
+				Value: shellID,
+			},
+		},
+	}
+
+	return &Envelope{
+		S:      "http://www.w3.org/2003/05/soap-envelope",
+		WSA:    "http://schemas.xmlsoap.org/ws/2004/08/addressing",
+		RSP:    "http://schemas.microsoft.com/wbem/wsman/1/windows/shell",
+		WSMAN:  "http://schemas.dmtf.org/wbem/wsman/1/wsman.xsd",
+		WSMV:   "http://schemas.microsoft.com/wbem/wsman/1/wsman.xsd",
+		Header: header,
+		Body:   Body{}, // Empty body for Delete
+	}
+}
 
 // Envelope to String
 func EnvelopeToString(envelope *Envelope) (string,error) {
