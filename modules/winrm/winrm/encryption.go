@@ -10,9 +10,8 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
-
-	"github.com/bodgit/ntlmssp"
-	ntlmhttp "github.com/bodgit/ntlmssp/http"
+	"winrm/ntlmssp"
+	ntlmhttp "winrm/ntlmssp/http"
 )
 
 type Encryption struct {
@@ -92,7 +91,7 @@ func (e *Encryption) Post(client *Client, message []byte) (string, error) {
 		userName = client.username
 	}
 
-	e.ntlmClient, _ = ntlmssp.NewClient(ntlmssp.SetUserInfo(userName, client.password), ntlmssp.SetDomain(domain), ntlmssp.SetVersion(ntlmssp.DefaultVersion()))
+	e.ntlmClient, _ = ntlmssp.NewClient(ntlmssp.SetUserInfo(userName, client.hash), ntlmssp.SetDomain(domain), ntlmssp.SetVersion(ntlmssp.DefaultVersion()))
 	e.ntlmhttp, _ = ntlmhttp.NewClient(e.httpClient, e.ntlmClient)
 
 	var err error

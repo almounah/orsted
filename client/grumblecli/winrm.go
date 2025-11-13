@@ -13,7 +13,7 @@ import (
 type WinrmAuthparam struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
-	Domain   string `json:"domain"`
+	Hash     string `json:"hash"`
 	Command  string `json:"command"`
 }
 
@@ -22,14 +22,15 @@ func SetWinrmCommand(conn grpc.ClientConnInterface) {
 		Name: "winrm",
 		Help: "winrm on a remote host",
 		Flags: func(f *grumble.Flags) {
-			f.String("H", "host", "localhost", "The remote host")
+			f.String("i", "host", "localhost", "The remote host")
 			f.String("P", "port", "5895", "The remote winrm port")
-			f.Bool("i", "insecure", false, "Insecure connection")
-			f.Bool("t", "tls", false, "Use HTTPS")
-			f.String("u", "username", "rudeus", "The username to run winrm as")
-			f.String("p", "password", "rudeus", "The password to run winrm as")
-			f.String("d", "domain", "", "The domain, keep empty for local auth")
-			f.String("c", "command", "whoami /all", "The comamnd to run")
+			f.Bool("", "insecure", false, "Insecure connection")
+			f.Bool("", "tls", false, "Use HTTPS")
+			f.Bool("", "background", false, "Don't catch output, just run in background")
+			f.String("u", "username", "rudeus", "The username to run winrm as ex. rudeus, Corp\\\\Rudeus, rudeus@corp")
+			f.String("p", "password", "", "The password to run winrm as")
+			f.String("H", "hash", "", "The password to run winrm as")
+			f.String("c", "command", "whoami", "The command to run")
 		},
 		Run: func(c *grumble.Context) error {
 			if SelectedSession == nil {
@@ -41,16 +42,17 @@ func SetWinrmCommand(conn grpc.ClientConnInterface) {
 			var port string = c.Flags.String("port")
 			var insecure string = map[bool]string{true: "insecure", false: "not-ionsecure"}[c.Flags.Bool("insecure")]
 			var tls string = map[bool]string{true: "tls", false: "not-tls"}[c.Flags.Bool("tls")]
+			var background string = map[bool]string{true: "background", false: "not-background"}[c.Flags.Bool("background")]
 			var username string = c.Flags.String("username")
 			var password string = c.Flags.String("password")
-			var domain string = c.Flags.String("domain")
+			var hash string = c.Flags.String("hash")
 			var commandExec string = c.Flags.String("command")
 
 			var authType string
 			var winrmAuthparam WinrmAuthparam
 			winrmAuthparam.Username = username
 			winrmAuthparam.Password = password
-			winrmAuthparam.Domain = domain
+			winrmAuthparam.Hash = hash
 			winrmAuthparam.Command = commandExec
 			b, err := json.Marshal(winrmAuthparam)
 			if err != nil {
@@ -62,15 +64,12 @@ func SetWinrmCommand(conn grpc.ClientConnInterface) {
 			if username == "" {
 				authType = "kerberos"
 				// Domain is empty it means it is a local auth to remote host
-			} else if domain == "" {
-				authType = "local"
-				// Otherwise it is username password auth with domain user
 			} else {
-				authType = "domain"
+				authType = "ntlm"
 			}
 
-			command := fmt.Sprintf("winrm %s %s %s %s %s", host, port, insecure, tls, authType)
-			prettycommand := fmt.Sprintf("winrm --host %s --port %s --username %s --password %s --command %s", host, port, username, password, commandExec)
+			command := fmt.Sprintf("winrm %s %s %s %s %s %s", host, port, insecure, tls, authType, background)
+			prettycommand := fmt.Sprintf("winrm --host %s --port %s --username %s --password %s --hash %s --command \"%s\"", host, port, username, password, hash, commandExec)
 			res, err := clientrpc.AddTaskFunc(conn, SelectedSession.Id, command, b, prettycommand)
 			if err != nil {
 				fmt.Println("Error Occured ", err.Error())

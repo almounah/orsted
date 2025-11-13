@@ -21,6 +21,7 @@ type Client struct {
 	Parameters
 	username string
 	password string
+	hash     string // hash is LM:NT
 	useHTTPS bool
 	url      string
 	http     Transporter
@@ -42,12 +43,12 @@ func NewClient(endpoint *Endpoint, user, password string) (*Client, error) {
 
 // NewClientWithParameters will create a new remote client on url, connecting with user and password
 // This function doesn't connect (connection happens only when CreateShell is called)
-func NewClientWithParameters(endpoint *Endpoint, user, password string, params *Parameters) (*Client, error) {
+func NewClientWithParameters(endpoint *Endpoint, user, hash string, params *Parameters) (*Client, error) {
 	// alloc a new client
 	client := &Client{
 		Parameters: *params,
 		username:   user,
-		password:   password,
+		hash:   hash,
 		url:        endpoint.url(),
 		useHTTPS:   endpoint.HTTPS,
 		// default transport
@@ -83,7 +84,7 @@ func (c *Client) CreateShell() (*Shell, error) {
 	// Step 1: Generate the creationXML using your function
 	var sessionID = uuid.New().String()
 	var runspaceID = uuid.New().String()
-	var pipelineID =  uuid.New().String()
+	var pipelineID = uuid.New().String()
 	creationXML, err := pwshxml.CreateCreationXML(runspaceID, pipelineID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create creationXML: %w", err)
@@ -118,7 +119,7 @@ func (c *Client) CreateShell() (*Shell, error) {
 		return nil, err
 	}
 	for i := 0; i < 1; i++ {
-		
+
 		messageId := uuid.New().String()
 		request, err := mspsrp.EnvelopeToString(mspsrp.CreateReceiveRequest("", shellID, messageId, sessionID))
 		if err != nil {

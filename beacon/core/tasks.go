@@ -361,9 +361,10 @@ func HandleTask(t utils.Task) ([]byte, error) {
 		var insecure string
 		var tls string
 		var authType string
+		var background string
 
 		commandArgs, size := ParseCommandLineArgument(res[1])
-		if size != 5 {
+		if size != 6 {
 			return []byte("Error in number argument for winrm"), fmt.Errorf("Error in number of args for winrm")
 		}
 		host = commandArgs[0]
@@ -371,6 +372,7 @@ func HandleTask(t utils.Task) ([]byte, error) {
 		insecure = commandArgs[2]
 		tls = commandArgs[3]
 		authType = commandArgs[4]
+		background = commandArgs[5]
 
 
 		data := map[string]interface{}{
@@ -380,6 +382,7 @@ func HandleTask(t utils.Task) ([]byte, error) {
 			"insecure": insecure,
 			"tls": tls,
 			"authType": authType,
+			"background": background,
 			"winrmPackedParam": t.Reqdata,
 		}
 		resp, err := RegisterTaskInModule("winrm", data)
