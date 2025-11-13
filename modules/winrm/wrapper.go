@@ -5,11 +5,18 @@ import (
 	"context"
 	"encoding/hex"
 	"fmt"
+	"regexp"
+	"strings"
 	"time"
 	"winrm/debugger"
 	"winrm/ntlmssp"
 	gowinrm "winrm/winrm"
 )
+
+func isLMNT(s string) bool {
+	re := regexp.MustCompile(`^[0-9a-fA-F]{32}:[0-9a-fA-F]{32}$`)
+	return re.MatchString(s)
+}
 
 func ExecuteWinrmCommandNTLMUsernamePassword(host string, port int, tls bool, insecure bool, username string, password string, hash string, command string) (stdout []byte, err error) {
 	debugger.Println("AuthType NTLM / Domain")
@@ -29,7 +36,7 @@ func ExecuteWinrmCommandNTLMUsernamePassword(host string, port int, tls bool, in
 	}
 
 	if password != "" {
-		lmByte, err := ntlmssp.NtowfV1(password)
+		lmByte, err := ntlmssp.LmowfV1(password)
 		if err != nil {
 			return []byte(err.Error()), err
 		}
@@ -40,6 +47,15 @@ func ExecuteWinrmCommandNTLMUsernamePassword(host string, port int, tls bool, in
 		lm := hex.EncodeToString(lmByte)
 		nt := hex.EncodeToString(ntByte)
 		hash = fmt.Sprintf("%s:%s", lm, nt)
+	}
+
+	if !strings.Contains(hash,":") {
+		hash = "00000000000000000000000000000000:"+hash
+	} else {
+		if !isLMNT(hash) {
+			err := fmt.Errorf("Wrong hash format")
+			return []byte(err.Error()), err
+		}
 	}
 
 	connectTimeout, err := time.ParseDuration("5s")
