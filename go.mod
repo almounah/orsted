@@ -6,6 +6,7 @@ require (
 	github.com/AlecAivazis/survey/v2 v2.3.7
 	github.com/BurntSushi/toml v1.2.1
 	github.com/boltdb/bolt v1.3.1
+	github.com/coder/websocket v1.8.14
 	github.com/desertbit/grumble v1.1.3
 	github.com/fatih/color v1.14.1
 	github.com/go-ping/ping v1.1.0

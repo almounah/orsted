@@ -3,7 +3,6 @@ package autoroute
 import (
 	"fmt"
 	"orsted/protobuf/orstedrpc"
-	"strconv"
 	"strings"
 )
 
@@ -26,32 +25,10 @@ func AddRoute(beacondId string, subnet string) error {
 		return fmt.Errorf("Beacon already ligoloing, will only add route locally")
 	}
 
-	// Otherwise create a new route
-	port := 33433 + PORTCOUNT
+	// Otherwise send Task to beacon to Create Route by connecting to websocket
+	// Done in Task 
+	
 
-	r, err := NewRoute(beacondId, strconv.Itoa(port))
-	if err != nil {
-		fmt.Println("Error ", err)
-		return err
-	}
-	err = r.InitialiseTunInterface()
-	if err != nil {
-		fmt.Println("Error ", err)
-		// Failed to initialise, delete from global
-		r.DeleteRouteFromGlobalList()
-		return err
-	}
-
-	err = r.AddSubnetForRoute(subnet)
-	if err != nil {
-		fmt.Println("Error ", err)
-		// Failed to add 1 route, delete from global
-		r.DeleteRouteTunInterface()
-		r.DeleteRouteFromGlobalList()
-		return err
-	}
-
-	go r.StartRoute()
 	return nil
 }
 

@@ -2,14 +2,12 @@ package autoroute
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net"
 	"os/exec"
 	"os/user"
 	"runtime"
 	"strconv"
-	"sync"
 	"time"
 
 	"github.com/hashicorp/yamux"
@@ -24,36 +22,30 @@ type Route struct {
 	RouteId       string
 	Subnet        []string
 	BeaconId      string
-	PortNumber    string
-	LocalListener net.Listener
-	Proxy         *ServerConn
-	ProxyMu       *sync.Mutex
-	ProxyCond     *sync.Cond
-	Agent         *ServerConn
-	AgentMu       *sync.Mutex
-	AgentCond     *sync.Cond
+	ProxyConn     net.Conn
 }
 
 var ROUTE_LIST []*Route
 var PORTCOUNT int = 0
 
-func NewRoute(beaconId string, PortNumber string) (*Route, error) {
+func NewRoute(beaconId string, wsConn net.Conn) (*Route, error) {
 	r := Route{}
 	r.RouteId = strconv.Itoa(len(ROUTE_LIST) + 1)
 	r.BeaconId = beaconId
-	r.PortNumber = PortNumber
 	r.Subnet = []string{}
 
-	var proxymu sync.Mutex
-	r.ProxyMu = &proxymu
-	r.ProxyCond = sync.NewCond(r.ProxyMu)
+	r.ProxyConn = wsConn
 
-	var agentmu sync.Mutex
-	r.AgentMu = &agentmu
-	r.AgentCond = sync.NewCond(r.AgentMu)
 
 	ROUTE_LIST = append(ROUTE_LIST, &r)
-	PORTCOUNT++
+	err := r.InitialiseTunInterface()
+	if err != nil {
+		fmt.Println("Error ", err)
+		// Failed to initialise, delete from global
+		r.DeleteRouteFromGlobalList()
+		return nil, err
+	}
+	go r.StartRoute()
 	return &r, nil
 }
 
@@ -144,57 +136,12 @@ func (r *Route) StartRoute() error {
 		logrus.Warn("unable to get interface name, err:", err)
 	}
 
-	// Start LocalListener
-	l, err := net.Listen("tcp", "127.0.0.1:"+r.PortNumber)
-	if err != nil {
-		logrus.Info("Error Starting Listener ", err)
-		return fmt.Errorf("failed to start listener: %w", err)
-	}
-
-	r.LocalListener = l
-	logrus.Info("TCP listener started on 127.0.0.1:" + r.PortNumber)
-
-	// Start go routine to set proxy client
-	go func(a *Route) {
-		for {
-			conn, err := l.Accept()
-			if err != nil {
-				if errors.Is(err, net.ErrClosed) {
-					fmt.Println("Listener closed. Exiting accept loop.")
-					break
-				}
-				fmt.Println("Error Accepting Connection ", err)
-				continue // Optionally handle error appropriately
-			}
-			fmt.Println("Accepted connection successfully")
-			proxyClient := &ServerConn{Con: conn, ID: "proxy_client"}
-			a.Proxy = proxyClient
-			a.ProxyCond.Signal()
-		}
-	}(r)
-
-	// Start the Agent
-	agentServer, err := NewServerConn("agent_server", r.PortNumber)
-	if err != nil {
-		logrus.Warn("Unable to create agent Server ", err)
-	}
-	r.Agent = &agentServer
-	r.AgentCond.Signal()
-	fmt.Println("Created Server_Conn, signalled Agent")
-	fmt.Println(r.Agent)
-	fmt.Println(agentServer)
-
 	// Create yamux session
 	cfg := yamux.DefaultConfig()
 	cfg.KeepAliveInterval = 120 * time.Second
 	cfg.ConnectionWriteTimeout = 120 * time.Second
-	r.ProxyMu.Lock()
-	for r.Proxy == nil {
-		r.ProxyCond.Wait()
-	}
-	r.ProxyMu.Unlock()
 
-	session, err := yamux.Client(r.Proxy, nil)
+	session, err := yamux.Client(r.ProxyConn, nil)
 	if err != nil {
 		fmt.Println("Error in creating yamux client ", err)
 
@@ -280,7 +227,7 @@ func (r *Route) DeleteSubnetFromRoute(subnet string) error {
 
 func (r *Route) StopRoute() error {
 	err := r.DeleteRouteTunInterface()
-	r.LocalListener.Close()
+	r.ProxyConn.Close()
 	r.DeleteRouteFromGlobalList()
 	return err
 }

@@ -3,14 +3,59 @@ package pivot
 import (
 	"bufio"
 	"encoding/json"
+	"io"
 	"net"
 	"orsted/beacon/utils"
 	"strings"
 )
 
 func handleConnection(conn net.Conn) {
-	defer conn.Close()
+	first := make([]byte, 1)
+	_, err := conn.Read(first)
+	if err != nil {
+		return
+	}
+	utils.Print("Read FIrst Byte from Child PEER ---> ", first)
+	if first[0] == 0x3 {
+		utils.Print("Pivot Received Intialize TCP - Handshake is occuring")
+		beaconId, _ := bufio.NewReader(conn).ReadString('\n')
+		beaconId = strings.TrimSuffix(beaconId, "\n")
+		utils.Print("beaconId from handshake --> ", beaconId)
+		parentRealTimeConn, err := utils.ParentPeer.GetRealTimeConn(beaconId)
+		if err != nil {
+			utils.Print("Error in getting parent peer con -> ", err)
+		}
+		conn.Write([]byte("OK"))
+		go func() {
+			utils.Print("Copy child -> parent START")
+			n, err := io.Copy(parentRealTimeConn, conn)
+			utils.Print("Copy child -> parent END | bytes:", n, "err:", err)
+		}()
+		utils.Print("Copy parent -> child START")
+		n, err := io.Copy(conn, parentRealTimeConn)
+		utils.Print("Copy parent -> child END | bytes:", n, "err:", err)
+		return
+	}
+//	if first[0] == 0x2 {
+//		utils.Print("Pivot Received Raw Byte - Must Be Real Time Data (ligolo)")
+//		parentRealTimeConn, err := utils.ParentPeer.GetRealTimeConn(utils.CurrentBeaconId)
+//		if err != nil {
+//			utils.Print("Error in getting parent peer con -> ", err)
+//			return
+//		}
+//		go func() {
+//			utils.Print("Copy child -> parent START")
+//			n, err := io.Copy(parentRealTimeConn, conn)
+//			utils.Print("Copy child -> parent END | bytes:", n, "err:", err)
+//		}()
+//		utils.Print("Copy parent -> child START")
+//		n, err := io.Copy(conn, parentRealTimeConn)
+//		utils.Print("Copy parent -> child END | bytes:", n, "err:", err)
+//		return
+//
+//	}
 
+	defer conn.Close()
 	scanner := bufio.NewScanner(conn)
 	scanner.Scan()
 	envelopeByte := scanner.Bytes()
@@ -18,7 +63,7 @@ func handleConnection(conn net.Conn) {
 
 	// Parse Envelope
 	var receivedEnvelop utils.Envelope
-	err := json.Unmarshal(envelopeByte, &receivedEnvelop)
+	err = json.Unmarshal(envelopeByte, &receivedEnvelop)
 	if err != nil {
 		return
 	}
