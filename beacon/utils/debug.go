@@ -2,7 +2,7 @@ package utils
 
 import "log"
 
-var DEBUG bool = true
+var DEBUG bool = false
 
 func Print(str... interface{}) {
     if DEBUG {

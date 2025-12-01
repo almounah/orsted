@@ -17,7 +17,8 @@ func AddRoute(beacondId string, subnet string) error {
 
 	// If it is just add the subnet
 	if r != nil {
-		err := r.AddSubnetForRoute(subnet)
+		err := r.AddRouteToTun(subnet)
+		r.Subnet = append(r.Subnet, subnet)
 		if err != nil {
 			fmt.Println("Error ", err)
 			return err
@@ -25,8 +26,8 @@ func AddRoute(beacondId string, subnet string) error {
 		return fmt.Errorf("Beacon already ligoloing, will only add route locally")
 	}
 
-	// Otherwise send Task to beacon to Create Route by connecting to websocket
-	// Done in Task 
+	// Otherwise create Empty Route that will be populated if Websocket Success
+	NewEmptyRoute(beacondId, subnet)
 	
 
 	return nil

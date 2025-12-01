@@ -23,7 +23,7 @@ func HandleAutorouteWebsocket(w http.ResponseWriter, r *http.Request) {
     utils.PrintDebug("ID =", id)
 
 	ProxyConn := websocket.NetConn(netctx, ws, websocket.MessageBinary)
-	NewRoute(id, ProxyConn)
+	ActivateRoute(id, ProxyConn)
 
 	return
 }

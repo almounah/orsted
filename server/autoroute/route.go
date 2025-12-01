@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"orsted/server/utils"
 	"os/exec"
 	"os/user"
 	"runtime"
@@ -19,34 +20,60 @@ import (
 )
 
 type Route struct {
-	RouteId       string
-	Subnet        []string
-	BeaconId      string
-	ProxyConn     net.Conn
+	RouteId   string
+	Subnet    []string
+	BeaconId  string
+	ProxyConn net.Conn
+	Active    bool
 }
 
 var ROUTE_LIST []*Route
 var PORTCOUNT int = 0
 
-func NewRoute(beaconId string, wsConn net.Conn) (*Route, error) {
+func NewEmptyRoute(beaconId string, subnet string) {
 	r := Route{}
 	r.RouteId = strconv.Itoa(len(ROUTE_LIST) + 1)
 	r.BeaconId = beaconId
-	r.Subnet = []string{}
+	r.Subnet = []string{subnet}
+	r.Active = false
+	ROUTE_LIST = append(ROUTE_LIST, &r)
+}
 
+func ActivateRoute(beaconId string, wsConn net.Conn) error {
+	var r *Route
+	for _, c := range ROUTE_LIST {
+		if c.BeaconId == beaconId {
+			r = c
+		}
+	}
+	if r == nil {
+		return fmt.Errorf("Error in design, Activating a non existant Empty Route")
+	}
 	r.ProxyConn = wsConn
 
+	if len(r.Subnet) != 1 {
+		return fmt.Errorf("Error in design, Activating a route with multiple subnet ?!")
+	}
 
-	ROUTE_LIST = append(ROUTE_LIST, &r)
 	err := r.InitialiseTunInterface()
 	if err != nil {
 		fmt.Println("Error ", err)
 		// Failed to initialise, delete from global
 		r.DeleteRouteFromGlobalList()
-		return nil, err
+		return err
 	}
+
+	err = r.AddRouteToTun(r.Subnet[0])
+	if err != nil {
+		r.StopRoute()
+		return err
+	}
+
+	
+
 	go r.StartRoute()
-	return &r, nil
+	r.Active = true
+	return nil
 }
 
 func (r *Route) InitialiseTunInterface() error {
@@ -74,8 +101,12 @@ func (r *Route) InitialiseTunInterface() error {
 	return nil
 }
 
-func (r *Route) AddSubnetForRoute(route string) error {
+func (r *Route) AddSubnetForRodsute(route string) error {
 
+	return nil
+}
+
+func (r *Route) AddRouteToTun(route string) error {
 	tunName := "oss_" + r.BeaconId
 	// Command 3: sudo ip route add <route> dev <tunName>
 	cmd3 := exec.Command("ip", "route", "add", route, "dev", tunName)
@@ -84,10 +115,11 @@ func (r *Route) AddSubnetForRoute(route string) error {
 		return fmt.Errorf("failed to add route: %v\nOutput: %s", err, string(cmd3Out))
 	}
 
-	r.Subnet = append(r.Subnet, route)
 
 	return nil
+
 }
+
 
 func (r *Route) StartRoute() error {
 
@@ -167,7 +199,7 @@ func (r *Route) StartRoute() error {
 				fmt.Println("Closing session, need to delete route")
 				logrus.WithFields(logrus.Fields{}).Warnf("Agent dropped.")
 				cancelTunnel()
-				time.Sleep(3*time.Second)
+				time.Sleep(3 * time.Second)
 				err := r.DeleteRouteTunInterface()
 				if err != nil {
 					fmt.Println(err.Error())
@@ -182,8 +214,9 @@ func (r *Route) StartRoute() error {
 }
 
 func (r *Route) DeleteRouteFromGlobalList() error {
+	utils.PrintDebug("Deleting Route From GLobal List -> ", r.RouteId, ROUTE_LIST)
 	for i, route := range ROUTE_LIST {
-		if route == r {
+		if route.RouteId == r.RouteId {
 			// Remove the element at index i
 			ROUTE_LIST = append(ROUTE_LIST[:i], ROUTE_LIST[i+1:]...)
 			break
@@ -207,6 +240,7 @@ func (r *Route) DeleteRouteTunInterface() error {
 func (r *Route) DeleteSubnetFromRoute(subnet string) error {
 	var found bool = false
 	for i, s := range r.Subnet {
+		utils.PrintDebug("Iterating Over Route --> ", i, s)
 		if s == subnet {
 			// Remove target from slice
 			r.Subnet = append(r.Subnet[:i], r.Subnet[i+1:]...)
