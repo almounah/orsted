@@ -101,11 +101,6 @@ func (r *Route) InitialiseTunInterface() error {
 	return nil
 }
 
-func (r *Route) AddSubnetForRodsute(route string) error {
-
-	return nil
-}
-
 func (r *Route) AddRouteToTun(route string) error {
 	tunName := "oss_" + r.BeaconId
 	// Command 3: sudo ip route add <route> dev <tunName>

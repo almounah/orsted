@@ -18,11 +18,11 @@ func AddRoute(beacondId string, subnet string) error {
 	// If it is just add the subnet
 	if r != nil {
 		err := r.AddRouteToTun(subnet)
-		r.Subnet = append(r.Subnet, subnet)
 		if err != nil {
 			fmt.Println("Error ", err)
 			return err
 		}
+		r.Subnet = append(r.Subnet, subnet)
 		return fmt.Errorf("Beacon already ligoloing, will only add route locally")
 	}
 
@@ -60,7 +60,10 @@ func DeleteSubnetRoute(beaconId, subnet string) error {
 	if r == nil {
 		return fmt.Errorf("Beacon Not found in list of route, maybe it died")
 	}
-	r.DeleteSubnetFromRoute(subnet)
+	err := r.DeleteSubnetFromRoute(subnet)
+	if err != nil {
+		return err
+	}
 	if len(r.Subnet) == 0 {
 		r.StopRoute()
 	}
