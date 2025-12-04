@@ -16,6 +16,9 @@ tools/compiled-modules/linux/*.so
 tools/compiled-modules/linux/*.h
 tools/donut.shellcode
 
+data/cert.pem
+data/key.pem
+
 *.ps1
 
 orsted.history

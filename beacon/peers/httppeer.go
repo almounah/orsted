@@ -2,10 +2,12 @@ package peers
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"io"
 	"net"
 	"net/http"
+	"net/url"
 	"strconv"
 	"time"
 
@@ -84,15 +86,40 @@ func (hp *HTTPPeer) GetRealTimeConn(beaconId string) (net.Conn, error) {
 	//if hp.RealTimeConn != nil {
 	//	return hp.RealTimeConn, nil
 	//}
-	url := "ws://" + hp.GetPeerAddress() + hp.Conf.Endpoints["autorouteMessage"] + beaconId
-	utils.Print("URL is --> ", url)
+	urlWs := "ws://" + hp.GetPeerAddress() + hp.Conf.Endpoints["autorouteMessage"] + beaconId
+	utils.Print("URL is --> ", urlWs)
 
 	ctx, _ := context.WithTimeout(context.Background(), time.Second*20)
 
+	var tlsConfig tls.Config
+	tlsConfig.InsecureSkipVerify = true
+	tlsConfig.ServerName = hp.Conf.Domain
+	tlsConfig.MinVersion = tls.VersionTLS10
+
+	var proxyUrl url.URL
+	var httpTransport *http.Transport
+	switch hp.Conf.HTTPProxyType {
+	case "https", "http":
+		proxyUrl = url.URL{
+			Scheme: hp.Conf.HTTPProxyType,
+			User:   url.UserPassword(hp.Conf.HTTPProxyUsername, hp.Conf.HTTPProxyPassword),
+			Host:   hp.Conf.HTTPProxyUrl,
+		}
+		httpTransport = &http.Transport{MaxIdleConns:    http.DefaultMaxIdleConnsPerHost, Proxy: http.ProxyURL(&proxyUrl)}
+		utils.Print("Proxy Detected --> ", proxyUrl.String())
+		utils.Print("Proxy URL Before Websocket --> ", proxyUrl.String())
+	default:
+		httpTransport = &http.Transport{}
+	}
+
+
+	
+
+	httpClient := &http.Client{Transport: httpTransport}
 	httpheader := &http.Header{}
-	httpClient := &http.Client{}
-	wsConn, _, err := websocket.Dial(ctx, url, &websocket.DialOptions{HTTPClient: httpClient, HTTPHeader: *httpheader})
+	wsConn, _, err := websocket.Dial(ctx, urlWs, &websocket.DialOptions{HTTPClient: httpClient, HTTPHeader: *httpheader})
 	if err != nil {
+
 		return nil, err
 	}
 	netctx, _ := context.WithTimeout(context.Background(), time.Hour*999999)
