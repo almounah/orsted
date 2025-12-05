@@ -91,13 +91,9 @@ func DownloadFileToPath(url, directory, fileName string) error {
 		req.Header.Set("Authorization", "Bearer "+AuthToken)
 	}
 
-
 	// Send the request
 	client := &http.Client{}
 	resp, err := client.Do(req)
-	if err != nil {
-		return fmt.Errorf("failed to send request: %w", err)
-	}
 	if err != nil {
 		return fmt.Errorf("failed to download file: %w", err)
 	}
@@ -105,7 +101,6 @@ func DownloadFileToPath(url, directory, fileName string) error {
 
 	path := filepath.Join(directory, fileName)
 
-	fmt.Println(fmt.Sprintf("Downloading %s to %s", url, path))
 
 	// Check if the request was successful
 	if resp.StatusCode != http.StatusOK {
@@ -198,28 +193,95 @@ func extractFile(f *zip.File, destDir string) error {
 }
 
 // INitialize batcave by installing it and parsing the struct
-func InitBatcave() error {
+func InitBatcave(update bool) error {
 	batcaveURL := Conf.BatcaveURL
 	batcaveJsonPath := Conf.BatcaveJsonPath
-
 	batcaveName := "batcave.json"
-	releaseURL := GetLatestURL(batcaveURL)
-	err := DownloadFileToPath(releaseURL, batcaveJsonPath, batcaveName)
-
 	batcaveLocation := filepath.Join(batcaveJsonPath, batcaveName)
-	data, err := os.ReadFile(batcaveLocation)
-	err = json.Unmarshal(data, &BatcaveVar)
-	return err
+
+	if !CheckFileExists(batcaveJsonPath, batcaveName) || update {
+		releaseURL := GetLatestURL(batcaveURL)
+		err := DownloadFileToPath(releaseURL, batcaveJsonPath, batcaveName)
+		if err != nil {
+			fmt.Println("Error Updating Batcave ", err)
+			return nil
+		}
+	}
+
+	if len(BatcaveVar.Gadgets) == 0 {
+		data, err := os.ReadFile(batcaveLocation)
+		if err != nil {
+			fmt.Println("Error Opening batcave.json ", err)
+			return nil
+		}
+		err = json.Unmarshal(data, &BatcaveVar)
+		if err != nil {
+			fmt.Println("Error unmarsheling batcave struct", err)
+			return nil
+		}
+
+	}
+	return nil
 
 }
 
-func CheckBatcaveExists() bool {
-	batcaveJsonPath := Conf.BatcaveJsonPath
-
-	batcaveName := "batcave.json"
-	batcaveLocation := filepath.Join(batcaveJsonPath, batcaveName)
+func CheckFileExists(directory, name string) bool {
+	batcaveLocation := filepath.Join(directory, name)
 	_, err := os.Stat(batcaveLocation)
 	return err == nil
+}
+
+func DownloadAndUnzipBatGadget(batgadgetName string, force bool) error {
+
+	var targetGadget Gadget
+	for _, g := range BatcaveVar.Gadgets {
+		if strings.EqualFold(strings.ToLower(g.Name), strings.ToLower(batgadgetName)) {
+			targetGadget = g
+			break
+		}
+
+	}
+
+	if (targetGadget == Gadget{}) {
+		return fmt.Errorf("BatGadget Not Found in Batcave")
+	}
+
+	fmt.Println(fmt.Sprintf("Downloading BatGadget %s ...", targetGadget.Name))
+
+	destinationDir := ""
+	extension := ""
+	switch targetGadget.Type {
+	case "dotnet":
+		destinationDir = Conf.NetAssemblyPath
+		extension = "exe"
+	case "ps1":
+		destinationDir = Conf.Ps1ScriptPath
+		extension = "ps1"
+	case "exe":
+		destinationDir = Conf.ExePath
+		extension = "exe"
+	default:
+		return fmt.Errorf("File Type Not Supported --> ", targetGadget.Type)
+	}
+
+	fileName := fmt.Sprintf("%s.%s", targetGadget.Name, extension)
+	if !CheckFileExists(destinationDir, fileName) || force {
+
+		releaseURL := GetLatestURL(targetGadget.Url)
+		err := DownloadFileToPath(releaseURL, destinationDir, "temp.zip")
+		if err != nil {
+			return err
+		}
+	}
+
+	tempZipPath := filepath.Join(destinationDir, "temp.zip")
+	err := UnzipFile(tempZipPath, destinationDir)
+	if err != nil {
+		return err
+	}
+
+	return os.Remove(tempZipPath)
+
 }
 
 func SetBatcaveCommands(conn grpc.ClientConnInterface) {
@@ -239,7 +301,7 @@ func SetBatcaveCommands(conn grpc.ClientConnInterface) {
 			if enteredTok != "" {
 				AuthToken = enteredTok
 				fmt.Println("Token saved in client process memory")
-				return nil 
+				return nil
 			}
 			fmt.Print("Enter Github API Token: ")
 			password, err := term.ReadPassword(int(os.Stdin.Fd()))
@@ -258,7 +320,7 @@ func SetBatcaveCommands(conn grpc.ClientConnInterface) {
 		Name: "update",
 		Help: "Repoll the batcave with any potential new batgadget or config",
 		Run: func(c *grumble.Context) error {
-			err := InitBatcave()
+			err := InitBatcave(true)
 			if err != nil {
 				fmt.Println("Error Updating Batcave ", err)
 			}
@@ -275,12 +337,10 @@ func SetBatcaveCommands(conn grpc.ClientConnInterface) {
 		Run: func(c *grumble.Context) error {
 			// Implement the logic to start the listener
 			searchParam := c.Args.String("param")
-			if !CheckBatcaveExists() {
-				err := InitBatcave()
-				if err != nil {
-					fmt.Println("Error Updating Batcave ", err)
-					return nil
-				}
+
+			err := InitBatcave(false)
+			if err != nil {
+				fmt.Println("Error in Instantiating batcave -> ", err)
 			}
 
 			var GadgetsNameList []string
@@ -295,21 +355,30 @@ func SetBatcaveCommands(conn grpc.ClientConnInterface) {
 			for _, bundle := range BatcaveVar.Bundles {
 				for key := range bundle {
 					if strings.Contains(strings.ToLower(key), strings.ToLower(searchParam)) {
-						BundleNameList = append(BundleNameList, key)
+						BundleNameList = append(BundleNameList, fmt.Sprintf("%s ->-> %s", key, bundle[key]))
 					}
 				}
 
 			}
-			fmt.Println("BatGadget ===> ")
+			// Print BatGadget section
+			fmt.Println("\n╔═══════════════════════════════════╗")
+			fmt.Println("║         BatGadget Items           ║")
+			fmt.Println("╚═══════════════════════════════════╝")
 			for _, g := range GadgetsNameList {
-				fmt.Println(g)
-
+				fmt.Printf("  • %s\n", g)
 			}
-			fmt.Println(" ================================= ")
+
+			// Print separator
+			fmt.Println("\n═══════════════════════════════════")
+
+			// Print Bundle section
+			fmt.Println("\n╔═══════════════════════════════════╗")
+			fmt.Println("║         BatBundle Items           ║")
+			fmt.Println("╚═══════════════════════════════════╝")
 			for _, g := range BundleNameList {
-				fmt.Println(g)
-
+				fmt.Printf("  • %s\n", g)
 			}
+			fmt.Println() // Add final newline
 			return nil
 		},
 	}
@@ -339,6 +408,40 @@ func SetBatcaveCommands(conn grpc.ClientConnInterface) {
 		},
 		Run: func(c *grumble.Context) error {
 			// Implement the logic to start the listener
+			err := InitBatcave(false)
+			if err != nil {
+				fmt.Println("Error in Instantiating batcave -> ", err)
+			}
+			batType := c.Args.String("batType")
+			name := c.Args.String("name")
+
+			if batType == "batgadget" {
+				err := DownloadAndUnzipBatGadget(name, true)
+				if err != nil {
+					fmt.Println("Error in Downloading and Unzipping Batgadget -> ", err)
+				}
+				return nil
+			}
+
+			var GadgetNameList []string
+			for _, bundle := range BatcaveVar.Bundles {
+				for key := range bundle {
+					if strings.EqualFold(strings.ToLower(key), strings.ToLower(name)) {
+						GadgetNameList = bundle[key]
+						break
+					}
+				}
+
+			}
+			if len(GadgetNameList) == 0 {
+				fmt.Println("Batbundle not found in Batcave")
+			}
+			for _, g := range GadgetNameList {
+				err := DownloadAndUnzipBatGadget(g, true)
+				if err != nil {
+					fmt.Println("Error in Downloading and Unzipping Batgadget -> ", err)
+				}
+			}
 			return nil
 		},
 	}

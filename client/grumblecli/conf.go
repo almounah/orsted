@@ -6,6 +6,7 @@ type ClientConf struct {
 	DefaultHTTPSCert  string
 	DefaultHTTPSKey   string
 	NetAssemblyPath   string
+	ExePath           string
 	BatcaveJsonPath   string
 	BatcaveURL        string
 	Ps1ScriptPath     string

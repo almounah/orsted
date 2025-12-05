@@ -1,10 +1,13 @@
 orsted-client
 orsted-server
 
+orsted.history
 my.db
 
 *.exe
 *.dll
+*.zip
+*.ps1
 main_http
 main_https
 main_tcp
@@ -22,6 +25,4 @@ data/key.pem
 
 
 
-*.ps1
 
-orsted.history

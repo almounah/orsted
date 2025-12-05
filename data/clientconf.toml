@@ -12,6 +12,7 @@ BatcaveURL = "https://github.com/exploration-batcave/batcave"
 # Windows Arsenal
 NetAssemblyPath = "./tools/windows/dotnet/"
 Ps1ScriptPath = "./tools/windows/ps1/"
+ExePath = "./tools/windows/exe/"
 WindowsModulePath = "./tools/compiled-modules/windows/"
 
 # Linux Arsenal
