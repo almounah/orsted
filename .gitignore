@@ -15,9 +15,12 @@ tools/compiled-modules/windows/*.h
 tools/compiled-modules/linux/*.so
 tools/compiled-modules/linux/*.h
 tools/donut.shellcode
+tools/batcave.json
 
 data/cert.pem
 data/key.pem
+
+
 
 *.ps1
 
