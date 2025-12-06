@@ -3,6 +3,7 @@ package grumblecli
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/desertbit/grumble"
 	"google.golang.org/grpc"
@@ -47,12 +48,28 @@ func SetPowercliffCommand(conn grpc.ClientConnInterface) {
 		Args: func(f *grumble.Args) {
 			f.String("file", "Ps1 to load")
 		},
+		Completer: func(prefix string, args []string) []string {
+			batcaveSuggestion := GetListOfGadgetName("ps1") 
+			var suggestions []string
+
+            var modulesList []string
+            if len(args) == 0 {
+                modulesList = batcaveSuggestion
+            }
+			for _, moduleName := range modulesList {
+				if strings.HasPrefix(moduleName, prefix) {
+					suggestions = append(suggestions, moduleName + ".ps1")
+				}
+			}
+			return suggestions
+		},
 		Run: func(c *grumble.Context) error {
 			if SelectedSession == nil {
 				fmt.Println("No session selected. Use interact command to specify session")
 				return nil
 			}
 			moduleName := c.Args.String("file")
+			DownloadAndUnzipBatGadget(strings.TrimSuffix(moduleName, ".ps1"), false)
 			b, err := os.ReadFile(Conf.Ps1ScriptPath + moduleName)
 			if err != nil {
 				fmt.Println("Error Occured ", err.Error())

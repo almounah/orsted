@@ -31,6 +31,17 @@ type BatCave struct {
 var BatcaveVar BatCave
 var AuthToken string
 
+func GetListOfGadgetName(GadgetType string) []string {
+	InitBatcave(false)
+	var result []string
+	for _, g := range BatcaveVar.Gadgets {
+		if g.Type == GadgetType {
+			result = append(result, g.Name)
+		}
+	}
+	return result
+}
+
 func GetLatestURL(url string) string {
 	// Parse the GitHub URL to extract owner and repo
 	re := regexp.MustCompile(`github\.com/([^/]+)/([^/]+)`)
@@ -100,7 +111,6 @@ func DownloadFileToPath(url, directory, fileName string) error {
 	defer resp.Body.Close()
 
 	path := filepath.Join(directory, fileName)
-
 
 	// Check if the request was successful
 	if resp.StatusCode != http.StatusOK {
