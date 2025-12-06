@@ -23,13 +23,13 @@ func SetWinrmCommand(conn grpc.ClientConnInterface) {
 		Help: "winrm on a remote host",
 		Flags: func(f *grumble.Flags) {
 			f.String("i", "host", "localhost", "The remote host")
-			f.String("P", "port", "5895", "The remote winrm port")
+			f.String("P", "port", "5985", "The remote winrm port")
 			f.Bool("", "insecure", false, "Insecure connection")
 			f.Bool("", "tls", false, "Use HTTPS")
 			f.Bool("", "background", false, "Don't catch output, just run in background")
 			f.String("u", "username", "rudeus", "The username to run winrm as ex. rudeus, Corp\\\\Rudeus, rudeus@corp")
 			f.String("p", "password", "", "The password to run winrm as")
-			f.String("H", "hash", "", "The password to run winrm as")
+			f.String("H", "hash", "", "NT to be used in pass the hash")
 			f.String("c", "command", "whoami", "The command to run")
 		},
 		Run: func(c *grumble.Context) error {
