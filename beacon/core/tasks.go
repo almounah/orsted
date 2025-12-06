@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"strconv"
 	"strings"
 	"unsafe"
@@ -353,6 +354,38 @@ func HandleTask(t utils.Task) ([]byte, error) {
 			"script":  script,
 		}
 		resp, err := RegisterTaskInModule("powercliff", data)
+		return resp, err
+	case "winrm":
+		var host string
+		var port string
+		var insecure string
+		var tls string
+		var authType string
+		var background string
+
+		commandArgs, size := ParseCommandLineArgument(res[1])
+		if size != 6 {
+			return []byte("Error in number argument for winrm"), fmt.Errorf("Error in number of args for winrm")
+		}
+		host = commandArgs[0]
+		port = commandArgs[1]
+		insecure = commandArgs[2]
+		tls = commandArgs[3]
+		authType = commandArgs[4]
+		background = commandArgs[5]
+
+
+		data := map[string]interface{}{
+			"taskid":      t.TaskId,
+			"host":  host,
+			"port":  port,
+			"insecure": insecure,
+			"tls": tls,
+			"authType": authType,
+			"background": background,
+			"winrmPackedParam": t.Reqdata,
+		}
+		resp, err := RegisterTaskInModule("winrm", data)
 		return resp, err
 	case "upload":
 		stdoutbyte, stderrbyte, err := upload.Upload(res[1], t.Reqdata)

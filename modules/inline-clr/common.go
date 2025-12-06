@@ -7,7 +7,7 @@ import "C"
 
 import (
 	"encoding/json"
-	"fmt"
+	"inline-clr/debugger"
 	"unsafe"
 )
 
@@ -23,7 +23,7 @@ func RegisterTask(taskJson *byte, taskJsonSize *int, stdout **byte, stdoutSize *
 	var stdoutBytes []byte
 	var stderrBytes []byte
 
-	fmt.Println("Inside the Exported RegosterTask Func")
+	debugger.Println("Inside the Exported RegosterTask Func")
 
 	// Unmarshall Task Json
 	taskJsonByteArray := unsafe.Slice(taskJson, *taskJsonSize)
@@ -46,7 +46,7 @@ func RegisterTask(taskJson *byte, taskJsonSize *int, stdout **byte, stdoutSize *
 
     // Initialise Task
     err = InitialiseTask(&task)
-	fmt.Println(task)
+	debugger.Println(task)
 
 	if err != nil {
 		stdoutBytes = []byte("")
@@ -73,7 +73,7 @@ func RegisterTask(taskJson *byte, taskJsonSize *int, stdout **byte, stdoutSize *
 //export GetNextByteChunck
 func GetNextByteChunck(taskIdByte *byte, taskIdSize *int, stdout **byte, stdoutSize *int, stderr **byte, stderrSize *int) {
 	taskId := string(unsafe.Slice(taskIdByte, *taskIdSize))
-	fmt.Println("Executin task --->", taskId)
+	debugger.Println("Executin task --->", taskId)
 	var task *Task = &Task{}
 	for i := 0; i < len(TASK_LIST); i++ {
 		if TASK_LIST[i].TaskId == taskId {
@@ -83,7 +83,7 @@ func GetNextByteChunck(taskIdByte *byte, taskIdSize *int, stdout **byte, stdoutS
 	}
 	stdoutBytes, err := TaskHandler(task)
 	if err != nil {
-		fmt.Println(err.Error())
+		debugger.Println(err.Error())
 	}
 
 	*stdoutSize = len(stdoutBytes)
@@ -108,8 +108,8 @@ func GetTaskIdList(stdout **byte, stdoutSize *int, stderr **byte, stderrSize *in
 	for i := 0; i < len(TASK_LIST); i++ {
 		result = append(result, TASK_LIST[i].TaskId)
 	}
-	fmt.Println("Will Send Result Back to Hist ---->")
-	fmt.Println(result)
+	debugger.Println("Will Send Result Back to Hist ---->")
+	debugger.Println(result)
 
 	stdoutBytes, _ := json.Marshal(result)
 	*stdoutSize = len(stdoutBytes)

@@ -6,8 +6,8 @@ package main
 import "C"
 
 import (
-	"fmt"
 	"io"
+	"fmt"
 	"os"
 )
 
@@ -35,13 +35,13 @@ type Task struct {
 func InitialiseTask(task *Task) error {
 	f, err := os.Open(task.FileToDownload)
 	if err != nil {
-		fmt.Println(err.Error())
+		Println(err.Error())
 		return err
 	}
 	task.f = f
 	fs, err := task.f.Stat()
 	if err != nil {
-		fmt.Println(err.Error())
+		Println(err.Error())
 		return err
 	}
 	task.fileSize = fs.Size()
@@ -52,13 +52,13 @@ func InitialiseTask(task *Task) error {
 
 // Handle Task and update its status
 func TaskHandler(task *Task) ([]byte, error) {
-	fmt.Println("Inside the Exported Func")
+	Println("Inside the Exported Func")
 
 	sendBuf := make([]byte, MAX_SIZE)
 
 	n, err := task.f.Read(sendBuf)
 	if err != nil && err != io.EOF {
-		fmt.Println("Error reading file:", err)
+		Println("Error reading file:", err)
 		task.status = "failed"
 		return nil, err
 	}

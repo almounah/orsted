@@ -2,12 +2,12 @@ package main
 
 import (
 	"encoding/binary"
-	"fmt"
 	"strconv"
 	"syscall"
 	"unicode/utf16"
 	"unicode/utf8"
 	"unsafe"
+	"fmt"
 
 	"github.com/almounah/superdeye"
 	"golang.org/x/sys/windows"
@@ -166,7 +166,7 @@ func read_remoteintptr(process_handle uintptr, base_address uintptr, size uintpt
 	var bytesRead uintptr
 	status, _ := superdeye.SuperdSyscall("NtReadVirtualMemory", process_handle, base_address, uintptr(unsafe.Pointer(&buffer[0])), size, uintptr(unsafe.Pointer(&bytesRead)))
 	if status != 0 {
-		fmt.Printf("NtReadVirtualMemory failed with status: 0x%x\n", status)
+		Printf("NtReadVirtualMemory failed with status: 0x%x\n", status)
 		return 0
 	}
 	read_value := *(*uintptr)(unsafe.Pointer(&buffer[0]))
@@ -186,7 +186,7 @@ func read_remoteWStr(process_handle uintptr, base_address uintptr, size uintptr)
 	var bytesRead uintptr
 	status, _ := superdeye.SuperdSyscall("NtReadVirtualMemory", process_handle, base_address, uintptr(unsafe.Pointer(&buffer[0])), size, uintptr(unsafe.Pointer(&bytesRead)))
 	if status != 0 {
-		fmt.Printf("NtReadVirtualMemory failed with status: 0x%x\n", status)
+		Printf("NtReadVirtualMemory failed with status: 0x%x\n", status)
 		return ""
 	}
 	for i := 0; i < int(bytesRead)-1; i += 1 {
@@ -216,7 +216,7 @@ func enable_SeDebugPrivilege() bool {
 	var tokenHandle syscall.Token
 	ntstatus, _ := superdeye.SuperdSyscall("NtOpenProcessToken", uintptr(hProcess), uintptr(TOKEN_QUERY|TOKEN_ADJUST_PRIVILEGES), uintptr(unsafe.Pointer(&tokenHandle)))
 	if ntstatus != 0 {
-		fmt.Printf("ntOpenProcessToken status: 0x%x\n", ntstatus)
+		Printf("ntOpenProcessToken status: 0x%x\n", ntstatus)
 		return false
 	}
 	luid := LUID{LowPart: 20, HighPart: 0}
@@ -228,14 +228,14 @@ func enable_SeDebugPrivilege() bool {
 	// NtAdjustPrivilegesToken
 	ntstatus, _ = superdeye.SuperdSyscall("NtAdjustPrivilegesToken",uintptr(tokenHandle), 0, uintptr(unsafe.Pointer(&tp)), 0, 0, 0)
 	if ntstatus != 0 {
-		fmt.Printf("NtAdjustPrivilegesToken status: 0x%x\n", ntstatus)
+		Printf("NtAdjustPrivilegesToken status: 0x%x\n", ntstatus)
 		return false
 	}
 
 	// NtClose
 	ntstatus, _ = superdeye.SuperdSyscall("NtClose", uintptr(tokenHandle))
 	if ntstatus != 0 {
-		fmt.Printf("NtClose status: 0x%x\n", ntstatus)
+		Printf("NtClose status: 0x%x\n", ntstatus)
 		return false
 	}
 
@@ -249,7 +249,7 @@ func open_process(pid uintptr) uintptr {
 
 	status, _ := superdeye.SuperdSyscall("NtOpenProcess", uintptr(unsafe.Pointer(&handle)), PROCESS_QUERY_INFORMATION|PROCESS_VM_READ, uintptr(unsafe.Pointer(&objectAttributes)), uintptr(unsafe.Pointer(&clientId)))
 	if status != 0 {
-		fmt.Printf("Failed to open process. NTSTATUS: 0x%X\n", status)
+		Printf("Failed to open process. NTSTATUS: 0x%X\n", status)
 		return 0
 	}
 	return handle
@@ -263,7 +263,7 @@ func query_process_information(proc_handle uintptr) []ModuleInformation {
 	// NtQueryInformationProcess
 	status, _ := superdeye.SuperdSyscall("NtQueryInformationProcess", uintptr(proc_handle), ProcessBasicInformation, uintptr(unsafe.Pointer(&pbi)), uintptr(uint32(unsafe.Sizeof(pbi))), uintptr(unsafe.Pointer(&returnLength)))
 	if status != 0 {
-		fmt.Printf("NtQueryInformationProcess failed with status: 0x%x\n", status)
+		Printf("NtQueryInformationProcess failed with status: 0x%x\n", status)
 		return nil
 	}
 	peb_addr := pbi.PebBaseAddress
@@ -339,10 +339,10 @@ func get_dump_bytearr(osInfo []OSInformation, moduleinfo_arr []ModuleInformation
 	mem64list_offset := modulelist_size + 0x7c
 	mem64list_size := (16 + 16*len(mem64list_arr))
 	offset_memory_regions := mem64list_offset + mem64list_size
-	fmt.Printf("[+] Total number of modules: \t%v\n", number_modules)
-	fmt.Printf("[+] ModuleListStream size:   \t%v\n", modulelist_size)
-	fmt.Printf("[+] Mem64List offset: \t\t%v\n", mem64list_offset)
-	fmt.Printf("[+] Mem64List size: \t\t%v\n", mem64list_size)
+	Printf("[+] Total number of modules: \t%v\n", number_modules)
+	Printf("[+] ModuleListStream size:   \t%v\n", modulelist_size)
+	Printf("[+] Mem64List offset: \t\t%v\n", mem64list_offset)
+	Printf("[+] Mem64List size: \t\t%v\n", mem64list_size)
 
 	// Header
 	var header []byte
@@ -493,7 +493,7 @@ func procdump_native(pid int) ([]byte, error) {
 	osVersionInfo.DwOSVersionInfoSize = uint32(unsafe.Sizeof(osVersionInfo))
 	ret, _, err := rtlGetVersion.Call(uintptr(unsafe.Pointer(&osVersionInfo)))
 	if ret != 0 {
-		fmt.Printf("RtlGetVersion failed: %v\n", err)
+		Printf("RtlGetVersion failed: %v\n", err)
 		return nil, err
 	}
 	if err != nil {
@@ -507,11 +507,11 @@ func procdump_native(pid int) ([]byte, error) {
 
 	// Get SeDebugPrivilege
 	priv_enabled := enable_SeDebugPrivilege()
-	fmt.Printf("[+] Privilege Enabled:\t\t%t\n", priv_enabled)
+	Printf("[+] Privilege Enabled:\t\t%t\n", priv_enabled)
 
 	// Get process handle
 	proc_handle := open_process(uintptr(pid))
-	fmt.Printf("[+] Process Handle: \t\t%d\n", proc_handle)
+	Printf("[+] Process Handle: \t\t%d\n", proc_handle)
 
 	// Get modules information (except module size)
 	moduleinfo_arr := query_process_information(proc_handle)
@@ -532,7 +532,7 @@ func procdump_native(pid int) ([]byte, error) {
 		var resultLength uintptr
 		status, _ := superdeye.SuperdSyscall("NtQueryVirtualMemory", proc_handle, mem_address, 0, uintptr(unsafe.Pointer(&memInfo)), uintptr(unsafe.Sizeof(memInfo)), uintptr(unsafe.Pointer(&resultLength)))
 		if status != 0 {
-			fmt.Printf("NtQueryVirtualMemory failed with status: 0x%x\n", status)
+			Printf("NtQueryVirtualMemory failed with status: 0x%x\n", status)
 			return nil, err
 		}
 		if memInfo.Protect != PAGE_NOACCESS && memInfo.State == MEM_COMMIT {

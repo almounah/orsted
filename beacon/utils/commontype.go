@@ -1,5 +1,7 @@
 package utils
 
+import "net"
+
 // Redeclaring types here to avoid protojson and protbuf in implant (big size)
 type Task struct {
 	TaskId    string `json:"taskId"`
@@ -38,6 +40,16 @@ type Peer interface {
 
     // Set Peer Id (same as Beacon ID) (used because Server decide Beacon Id)
     SetPeerID(string) string
+
+	// Get Peer Address IP:PORT
+	GetPeerAddress() string
+
+	// Return a Conn that is used for real time purposes
+	// For HTTP is a Websocket
+	// For TCP is simple Dial
+	// Used in Ligolo
+	// It initialise Real time Conn if it is not
+	GetRealTimeConn(beaconId string) (net.Conn, error)
 
     // Used by current beacon to send Data to Peer and get response
     // Pure networking stuff - doesn't add encryption, doesn't 

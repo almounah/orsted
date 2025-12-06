@@ -5,7 +5,10 @@ import (
 )
 
 func GetUserName() string {
-    u, _ := user.Current()
+    u, err := user.Current()
+	if err != nil {
+		return "XXXXXXXX"
+	}
     return u.Username
 }
 

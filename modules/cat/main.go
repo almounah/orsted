@@ -6,7 +6,6 @@ package main
 import "C"
 
 import (
-	"fmt"
 	"sync"
 )
 
@@ -32,14 +31,14 @@ func TaskHandler(task *Task) (stdout []byte, err error) {
 	stdout, err = cat(task.Path)
 	task.status = "completed"
 	if err != nil {
-		fmt.Println("Fail")
+		Println("Fail")
 		task.status = "failed"
-		fmt.Println("Error is", err.Error())
+		Println("Error is", err.Error())
 		return []byte(err.Error()), err
 	}
-	fmt.Println("Done Executing")
-	fmt.Println("Result From DLL --->")
-	fmt.Println(string(stdout))
+	Println("Done Executing")
+	Println("Result From DLL --->")
+	Println(string(stdout))
 	return stdout, err
 }
 

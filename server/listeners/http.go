@@ -234,43 +234,11 @@ func SocksMessage(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func autoRouteMessage(w http.ResponseWriter, r *http.Request) {
-	utils.PrintDebug("Socks Message Called")
-	defer r.Body.Close()
-
-	body, err := io.ReadAll(r.Body)
-	if err != nil {
-		http.Error(w, "Failed to read request body", http.StatusInternalServerError)
-		return
-	}
-
-	//utils.PrintDebug("Raw Socks Body:", string(body))
-
-	var envelope orstedrpc.Envelope
-	err = protojson.Unmarshal(body, &envelope)
-	if err != nil {
-		utils.PrintDebug("Error in unmarshelling Enveloppe", err.Error())
-		http.Error(w, "Failed to read request body", http.StatusInternalServerError)
-		return
-	}
-
-	//utils.PrintDebug("Envelope Recived", fmt.Sprintf("Type: %s, Id: %s, Data:%s, Chain:%s", envelope.Type, envelope.Id, string(envelope.Data), envelope.Chain))
-
-	res := autoroute.HandleAutorouteMessage(&envelope)
-	byteJson, err := protojson.Marshal(res)
-	if err != nil {
-		utils.PrintDebug("Error in Marshelling Enveloppe", err.Error())
-		http.Error(w, "Failed to read request body", http.StatusInternalServerError)
-		return
-	}
-	w.Write(byteJson)
-
-}
 
 func HostEndpoint(w http.ResponseWriter, r *http.Request) {
 
 	utils.PrintDebug("hostEndpoint Called")
-	fileName := strings.TrimPrefix(r.URL.Path, profiles.Config.Endpoints["hostEndpoint"])
+	fileName := strings.TrimPrefix(r.URL.Path, profiles.Config.Endpoints["hostendpoint"])
 	if fileName == "" {
 		utils.PrintDebug("Error in file path, it is empty")
 		http.Error(w, "Failed to rread rrequest body", http.StatusBadRequest)
@@ -295,8 +263,8 @@ func addHttpHandler(mux *http.ServeMux) error {
 	mux.HandleFunc(endpoints["beaconTaskRetrieve"], SendTasksToBeacon)
 	mux.HandleFunc(endpoints["beaconTaskResultSend"], ReceiveTaskResults)
 	mux.HandleFunc(endpoints["socksMessage"], SocksMessage)
-	mux.HandleFunc(endpoints["autorouteMessage"], autoRouteMessage)
-	mux.HandleFunc(endpoints["hostEndpoint"], HostEndpoint)
+	mux.HandleFunc(endpoints["autorouteMessage"], autoroute.HandleAutorouteWebsocket)
+	mux.HandleFunc(endpoints["hostendpoint"], HostEndpoint)
 	return nil
 }
 

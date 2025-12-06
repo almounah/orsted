@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"strings"
 
 	"github.com/desertbit/grumble"
 	"google.golang.org/grpc"
@@ -28,12 +29,29 @@ func SetAssembluExecCommand(conn grpc.ClientConnInterface) {
 			f.String("file", "Assembly to load")
 			f.StringList("args", "Argument of the Assembly")
 		},
+		Completer: func(prefix string, args []string) []string {
+			batcaveSuggestion := GetListOfGadgetName("exe") 
+			batcaveSuggestion = append(batcaveSuggestion, GetListOfGadgetName("dotnet")...)
+			var suggestions []string
+
+            var modulesList []string
+            if len(args) == 0 {
+                modulesList = batcaveSuggestion
+            }
+			for _, moduleName := range modulesList {
+				if strings.HasPrefix(moduleName, prefix) {
+					suggestions = append(suggestions, moduleName + ".exe")
+				}
+			}
+			return suggestions
+		},
 		Run: func(c *grumble.Context) error {
 			if SelectedSession == nil {
 				fmt.Println("No session selected. Use interact command to specify session")
 				return nil
 			}
 			assemblyName := c.Args.String("file")
+			DownloadAndUnzipBatGadget(strings.TrimSuffix(assemblyName, ".exe"), false)
 			assemblyArgs := ""
 			for i := 0; i < len(c.Args.StringList("args")); i++ {
 				assemblyArgs += c.Args.StringList("args")[i]

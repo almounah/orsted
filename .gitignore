@@ -1,10 +1,13 @@
 orsted-client
 orsted-server
 
+orsted.history
 my.db
 
 *.exe
 *.dll
+*.zip
+*.ps1
 main_http
 main_https
 main_tcp
@@ -15,7 +18,11 @@ tools/compiled-modules/windows/*.h
 tools/compiled-modules/linux/*.so
 tools/compiled-modules/linux/*.h
 tools/donut.shellcode
+tools/batcave.json
 
-*.ps1
+data/cert.pem
+data/key.pem
 
-orsted.history
+
+
+

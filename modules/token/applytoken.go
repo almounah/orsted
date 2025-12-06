@@ -1,8 +1,8 @@
 package main
 
 import (
-	"fmt"
 	"unsafe"
+	"fmt"
 
 	"golang.org/x/sys/windows"
 )
@@ -34,11 +34,11 @@ const (
 func ImpersonateLoggedOnUser(hToken windows.Token) (err error) {
 	newToken, err := DuplicateToPrimary(hToken)
 	if err != nil {
-		fmt.Println("Error DuplicateToPrimary: ", err.Error())
+		Println("Error DuplicateToPrimary: ", err.Error())
 	}
 	err = NtSetInformationThread(windows.CurrentThread(), 5, unsafe.Pointer(&newToken), uint32(unsafe.Sizeof(newToken)))
 	if err != nil {
-		fmt.Println("Error NtSetInformationThread: ", err.Error())
+		Println("Error NtSetInformationThread: ", err.Error())
 	}
 	return err
 }

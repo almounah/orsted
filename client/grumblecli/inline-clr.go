@@ -3,6 +3,7 @@ package grumblecli
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/desertbit/grumble"
 	"google.golang.org/grpc"
@@ -44,9 +45,24 @@ func SetInlineExecCommand(conn grpc.ClientConnInterface) {
 
     loadAssemblyCmd := &grumble.Command{
 		Name: "load-assembly",
-		Help: "Load Assmebly in CLR",
+		Help: "Load Assembly in CLR",
 		Args: func(f *grumble.Args) {
 			f.String("file", "Assembly to load")
+		},
+		Completer: func(prefix string, args []string) []string {
+			batcaveSuggestion := GetListOfGadgetName("dotnet") 
+			var suggestions []string
+
+            var modulesList []string
+            if len(args) == 0 {
+                modulesList = batcaveSuggestion
+            }
+			for _, moduleName := range modulesList {
+				if strings.HasPrefix(moduleName, prefix) {
+					suggestions = append(suggestions, moduleName + ".exe")
+				}
+			}
+			return suggestions
 		},
 		Run: func(c *grumble.Context) error {
             if SelectedSession == nil {
@@ -54,6 +70,7 @@ func SetInlineExecCommand(conn grpc.ClientConnInterface) {
                 return nil
             }
 			moduleName := c.Args.String("file")
+			DownloadAndUnzipBatGadget(strings.TrimSuffix(moduleName, ".exe"), false)
 			b, err := os.ReadFile(Conf.NetAssemblyPath + moduleName)
 			if err != nil {
 				fmt.Println("Error Occured ", err.Error())
@@ -82,6 +99,21 @@ func SetInlineExecCommand(conn grpc.ClientConnInterface) {
 		Args: func(f *grumble.Args) {
 			f.String("file", "Assembly to load")
 			f.StringList("args", "Argument of the Assembly")
+		},
+		Completer: func(prefix string, args []string) []string {
+			batcaveSuggestion := GetListOfGadgetName("dotnet") 
+			var suggestions []string
+
+            var modulesList []string
+            if len(args) == 0 {
+                modulesList = batcaveSuggestion
+            }
+			for _, moduleName := range modulesList {
+				if strings.HasPrefix(moduleName, prefix) {
+					suggestions = append(suggestions, moduleName + ".exe")
+				}
+			}
+			return suggestions
 		},
 		Run: func(c *grumble.Context) error {
             if SelectedSession == nil {

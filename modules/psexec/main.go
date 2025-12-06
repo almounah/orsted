@@ -6,7 +6,6 @@ package main
 import "C"
 
 import (
-	"fmt"
 	"strings"
 )
 
@@ -35,7 +34,7 @@ func InitialiseTask(task *Task) error {
 func TaskHandler(task *Task) (stdout []byte, err error) {
 	err = PsExec(task.Hostname, task.BinPath, task.FileData, strings.Join(task.Args, " "), task.ServiceName, task.ServiceDesc)
 	if err != nil {
-		fmt.Println("Error Occured --> ", err.Error())
+		Println("Error Occured --> ", err.Error())
 		task.status = "failed"
 		return []byte(err.Error()), err
 	}

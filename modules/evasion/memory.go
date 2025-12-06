@@ -2,8 +2,8 @@ package main
 
 import (
 	"errors"
-	"fmt"
 	"unsafe"
+	"fmt"
 
 	"github.com/almounah/superdeye"
 	"golang.org/x/sys/windows"
@@ -60,13 +60,13 @@ func SearchForJeInstructionFromAddress(startAddress uintptr) uintptr {
     for {
         // CHeck Opcode
         opcode := *(*byte)(unsafe.Pointer(address))
-        fmt.Println(fmt.Sprintf("Opcode %0X", opcode))
+        Println(fmt.Sprintf("Opcode %0X", opcode))
         opcodePlusOne := *(*byte)(unsafe.Pointer(addressPlusOne))
         opcodePlusTwo := *(*byte)(unsafe.Pointer(addressPlusTwo))
-        fmt.Println(fmt.Sprintf("Opcode+1 %0X", opcodePlusOne))
+        Println(fmt.Sprintf("Opcode+1 %0X", opcodePlusOne))
         if opcode == byte(x64_RET_INSTRUCTION_OPCODE) && opcodePlusOne == byte(x64_INT3_INSTRUCTION_OPCODE) && opcodePlusTwo == byte(x64_INT3_INSTRUCTION_OPCODE){
             addresdebug := startAddress + uintptr(i)*uintptr(unsafe.Sizeof(byte(0)))
-            fmt.Println(fmt.Sprintf("Found ret address at %0x", addresdebug))
+            Println(fmt.Sprintf("Found ret address at %0x", addresdebug))
             break
         }
 
@@ -81,7 +81,7 @@ func SearchForJeInstructionFromAddress(startAddress uintptr) uintptr {
         addressAtI := startAddress + uintptr(i)*uintptr(unsafe.Sizeof(byte(0)))
         if CheckJeAddress(addressAtI) {
             jeAddress = addressAtI
-            fmt.Println(fmt.Sprintf("Found je address at %0x", jeAddress))
+            Println(fmt.Sprintf("Found je address at %0x", jeAddress))
 
             break
         }
@@ -94,7 +94,7 @@ func CheckJeAddress(address uintptr) bool {
     x64_JE_INSTRUCTION_OPCODE := 0x74
     x64_MOV_INSTRUCTION_OPCODE := 0xB8
     opcode := *(*byte)(unsafe.Pointer(address))
-    fmt.Println(fmt.Sprintf("Opcode at je %x", opcode))
+    Println(fmt.Sprintf("Opcode at je %x", opcode))
     if opcode != byte(x64_JE_INSTRUCTION_OPCODE) {
         return false
     }
@@ -103,9 +103,9 @@ func CheckJeAddress(address uintptr) bool {
     dwOffset := *(*byte)(unsafe.Pointer(jumpAddress))
 
     pMov := address + uintptr(dwOffset) + 2*uintptr(unsafe.Sizeof(byte(0)))
-    fmt.Println(fmt.Sprintf("MOv address at %0x", pMov))
+    Println(fmt.Sprintf("MOv address at %0x", pMov))
     opcodeAtMove := *(*byte)(unsafe.Pointer(pMov))
-    fmt.Println(fmt.Sprintf("Opcode at mov %x", opcodeAtMove))
+    Println(fmt.Sprintf("Opcode at mov %x", opcodeAtMove))
     return opcodeAtMove == byte(x64_MOV_INSTRUCTION_OPCODE)
 }
 

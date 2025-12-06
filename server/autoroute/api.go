@@ -3,7 +3,6 @@ package autoroute
 import (
 	"fmt"
 	"orsted/protobuf/orstedrpc"
-	"strconv"
 	"strings"
 )
 
@@ -18,40 +17,19 @@ func AddRoute(beacondId string, subnet string) error {
 
 	// If it is just add the subnet
 	if r != nil {
-		err := r.AddSubnetForRoute(subnet)
+		err := r.AddRouteToTun(subnet)
 		if err != nil {
 			fmt.Println("Error ", err)
 			return err
 		}
+		r.Subnet = append(r.Subnet, subnet)
 		return fmt.Errorf("Beacon already ligoloing, will only add route locally")
 	}
 
-	// Otherwise create a new route
-	port := 33433 + PORTCOUNT
+	// Otherwise create Empty Route that will be populated if Websocket Success
+	NewEmptyRoute(beacondId, subnet)
+	
 
-	r, err := NewRoute(beacondId, strconv.Itoa(port))
-	if err != nil {
-		fmt.Println("Error ", err)
-		return err
-	}
-	err = r.InitialiseTunInterface()
-	if err != nil {
-		fmt.Println("Error ", err)
-		// Failed to initialise, delete from global
-		r.DeleteRouteFromGlobalList()
-		return err
-	}
-
-	err = r.AddSubnetForRoute(subnet)
-	if err != nil {
-		fmt.Println("Error ", err)
-		// Failed to add 1 route, delete from global
-		r.DeleteRouteTunInterface()
-		r.DeleteRouteFromGlobalList()
-		return err
-	}
-
-	go r.StartRoute()
 	return nil
 }
 
@@ -82,7 +60,10 @@ func DeleteSubnetRoute(beaconId, subnet string) error {
 	if r == nil {
 		return fmt.Errorf("Beacon Not found in list of route, maybe it died")
 	}
-	r.DeleteSubnetFromRoute(subnet)
+	err := r.DeleteSubnetFromRoute(subnet)
+	if err != nil {
+		return err
+	}
 	if len(r.Subnet) == 0 {
 		r.StopRoute()
 	}

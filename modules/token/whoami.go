@@ -3,8 +3,8 @@ package main
 import (
 	"bytes"
 	"encoding/binary"
-	"fmt"
 	"unsafe"
+	"fmt"
 
 	"golang.org/x/sys/windows"
 )
@@ -322,7 +322,7 @@ func GetTokenGroups(token windows.Token) (groups []windows.SIDAndAttributes, err
 
 	tg := (*TOKEN_GROUPS)(unsafe.Pointer(&buf[0]))
 	groupCount := tg.GroupCount
-	fmt.Println("GroupCount is ", groupCount)
+	Println("GroupCount is ", groupCount)
 
 	groupsSlice := unsafe.Slice(&tg.Groups[0], groupCount)
 
@@ -330,7 +330,7 @@ func GetTokenGroups(token windows.Token) (groups []windows.SIDAndAttributes, err
 	for i := 1; i < int(groupCount); i++ {
 		var group windows.SIDAndAttributes
 		group = groupsSlice[i]
-		fmt.Println(group.Sid.String())
+		Println(group.Sid.String())
 		groups = append(groups, group)
 	}
 	return

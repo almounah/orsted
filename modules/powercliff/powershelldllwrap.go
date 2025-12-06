@@ -2,6 +2,7 @@ package main
 
 import (
 	memorymodule "pwshexec/MemoryModule"
+	debugger "pwshexec/debug"
 	clr "pwshexec/go-buena-clr"
 	"syscall"
 	"unsafe"
@@ -28,7 +29,9 @@ var (
 	pProcPowerShellAddScript                      = memorymodule.GetProcAddress(modPowerShell, "PowerShellAddScript")
 	pProcPowerShellAddCommand                     = memorymodule.GetProcAddress(modPowerShell, "PowerShellAddCommand")
 	pProcPowerShellInvoke                         = memorymodule.GetProcAddress(modPowerShell, "PowerShellInvoke")
-	pProcPowerShellClear                         = memorymodule.GetProcAddress(modPowerShell, "PowerShellClear")
+	pProcPowerShellClear                          = memorymodule.GetProcAddress(modPowerShell, "PowerShellClear")
+	pProcGetJustInTimeMethodAddress               = memorymodule.GetProcAddress(modPowerShell, "GetJustInTimeMethodAddressEx")
+	pProcPowerShellClearErrors                    = memorymodule.GetProcAddress(modPowerShell, "PowerShellClearErrors")
 	pProcPowerShellGetStream                      = memorymodule.GetProcAddress(modPowerShell, "PowerShellGetStream")
 	pProcPowerShellHadErrors                      = memorymodule.GetProcAddress(modPowerShell, "PowerShellHadErrors")
 	pProcPrintPowerShellInvokeResult              = memorymodule.GetProcAddress(modPowerShell, "PrintPowerShellInvokeResult")
@@ -137,6 +140,19 @@ func PowerShellClear(pAppDomain *clr.AppDomain, vtPowerShellInstance clr.Variant
 	return invokeResult, nil
 }
 
+func PowerShellClearErrors(pAppDomain *clr.AppDomain, vtPowerShellInstance clr.Variant) (clr.Variant, error) {
+	var invokeResult clr.Variant
+	ret, _, _ := syscall.SyscallN(
+		pProcPowerShellClearErrors,
+		uintptr(unsafe.Pointer(pAppDomain)),
+		uintptr(unsafe.Pointer(&vtPowerShellInstance)),
+		uintptr(unsafe.Pointer(&invokeResult)),
+	)
+	if ret == 0 {
+		return clr.Variant{}, syscall.Errno(ret)
+	}
+	return invokeResult, nil
+}
 
 func PowerShellGetStream(pAppDomain *clr.AppDomain, vtPowerShellInstance clr.Variant, streamName string) (clr.Variant, error) {
 	var stream clr.Variant
@@ -206,6 +222,39 @@ func PrintPowerShellInvokeErrors(pAppDomain *clr.AppDomain, vtPowerShellInstance
 	)
 	// If the native function doesn't return a status, we can't detect errors here
 	return windows.UTF16PtrToString(output), nil
+}
+
+func GetFunctionAddressJIT(appDomain *clr.AppDomain, assemblyName string, className string, methodName string, nbarg uint32) (address uintptr, err error) {
+	debugger.Println("Will Call GetFunctionAddressJIT")
+	pAssName, err := syscall.UTF16PtrFromString(assemblyName)
+	if err != nil {
+		return 0, err
+	}
+	pclassName, err := syscall.UTF16PtrFromString(className)
+	if err != nil {
+		return 0, err
+	}
+	pmethodName, err := syscall.UTF16PtrFromString(methodName)
+	if err != nil {
+		return 0, err
+	}
+	var res uintptr = 0
+	var nb = nbarg
+	debugger.Println("Will do syscall on ", pProcGetJustInTimeMethodAddress)
+	ret, _, _ := syscall.SyscallN(
+		pProcGetJustInTimeMethodAddress,
+		uintptr(unsafe.Pointer(appDomain)),
+		uintptr(unsafe.Pointer(pAssName)),
+		uintptr(unsafe.Pointer(pclassName)),
+		uintptr(unsafe.Pointer(pmethodName)),
+		uintptr(unsafe.Pointer(&nb)),
+		uintptr(unsafe.Pointer(&res)),
+	)
+	debugger.Println("Done syscall ->", ret)
+	if ret != 0 && ret != 1 {
+		return res, syscall.Errno(ret)
+	}
+	return res, nil
 }
 
 //func PrintPowerShellInvocationStateInfoReason(pAppDomain *clr.AppDomain, vtReason clr.Variant)

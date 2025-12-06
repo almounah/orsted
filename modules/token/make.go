@@ -1,10 +1,10 @@
 package main
 
 import (
-	"fmt"
 	"strconv"
 	"strings"
 	"unsafe"
+	"fmt"
 
 	"golang.org/x/sys/windows"
 )
@@ -56,11 +56,11 @@ func maketoken(username, password, logonType string) ([]byte, error) {
 	}
 
 	res := fmt.Sprintf("Successfully created a Windows access token for %s with a logon ID of 0x%X. Token ID 0x%X", username, stats.AuthenticationId.LowPart, stats.TokenId.LowPart)
-	fmt.Println("Applying token in thread ---> ")
-	fmt.Println(windows.GetCurrentThreadId())
+	Println("Applying token in thread ---> ")
+	Println(windows.GetCurrentThreadId())
 	err = ApplyToken(token)
 	if err != nil {
-		fmt.Println("Error Applying Token ", err.Error())
+		Println("Error Applying Token ", err.Error())
 		return []byte(res), err
 	}
 

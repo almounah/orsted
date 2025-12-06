@@ -5,9 +5,6 @@ package main
 */
 import "C"
 
-import (
-	"fmt"
-)
 
 type Task struct {
 	TaskId     string `json:"taskid"`
@@ -26,7 +23,7 @@ func InitialiseTask(task *Task) error {
 func TaskHandler(task *Task) (stdout []byte, err error) {
 	stdout, err = ps()
     if err != nil {
-        fmt.Println("Error Occured --> ", err.Error())
+        Println("Error Occured --> ", err.Error())
 		task.status = "failed"
         return nil, err
     }
