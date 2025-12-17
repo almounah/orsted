@@ -5,6 +5,7 @@ orsted.history
 my.db
 
 *.exe
+*.h
 *.dll
 *.zip
 *.ps1
