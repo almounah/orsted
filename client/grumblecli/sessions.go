@@ -133,7 +133,51 @@ func SetSessionCommands(conn grpc.ClientConnInterface) {
 		},
 	}
 
+	interactCmd := &grumble.Command{
+		Name: "interact",
+		Help: "provide another way to interact with session",
+		Args: func(f *grumble.Args) {
+			f.String("id", "id of the session")
+		},
+		Run: func(c *grumble.Context) error {
+			// Implement the logic to start the listener
+			sessionID := c.Args.String("id")
+			res, err := clientrpc.ListSessionFunc(conn)
+            sessionList := res.GetSessions()
+			if err != nil {
+				fmt.Println("Error Occured ", err.Error())
+				return nil
+			}
+
+
+
+			for _, session := range sessionList {
+                if session.Id == sessionID {
+                    SelectedSession = session
+                }
+            }
+
+            // Avoid having Hostname in Username if user is local
+            user := SelectedSession.User
+            temp := strings.SplitN(user, "\\", 2) 
+            if len(temp) > 1 {
+                if temp[0] == SelectedSession.Hostname {
+                    user = temp[1]
+                }
+            }
+            // Change Prompt
+			c.App.SetPrompt(fmt.Sprintf("[Session %s: %s@%s] » ", SelectedSession.Id, user, SelectedSession.Hostname))
+
+            // Reset Commands 
+            SetCommands(conn)
+
+			return nil
+		},
+	}
+
+
 	sessionCmd.AddCommand(treeCmd)
+	sessionCmd.AddCommand(interactCmd)
 	sessionCmd.AddCommand(listCmd)
 	app.AddCommand(sessionCmd)
 }
