@@ -88,6 +88,8 @@ func addSingleCommandFromString(commandString string, conn grpc.ClientConnInterf
 		SetWinrmCommand(conn)
 	case "batcave":
 		SetBatcaveCommands(conn)
+	case "silph":
+		SetSilphCommand(conn)
 	case "help":
 		// Use default grumble help
 		return

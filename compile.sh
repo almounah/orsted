@@ -26,6 +26,7 @@ windowsmodules=(
   "runas"
   "ps"
   "winrm"
+  "silph"
 )
 
 #sudo apt install protoc-gen-go-grpc
