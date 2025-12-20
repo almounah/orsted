@@ -5,7 +5,7 @@ import (
 
 )
 
-var DEBUG bool = false
+var DEBUG bool = true
 var INFO bool = true
 
 func PrintDebug(str... interface{}) {
