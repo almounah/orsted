@@ -146,7 +146,7 @@ func (hp *HTTPSPeer) SendRequest(dataToSend []byte) ([]byte, error) {
 		InsecureSkipVerify: true, // for testing; verify cert in production
 	})
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	defer conn.Close()
 
@@ -154,7 +154,7 @@ func (hp *HTTPSPeer) SendRequest(dataToSend []byte) ([]byte, error) {
 
 	resp, err := io.ReadAll(conn) // Read everything until connection closes
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	// utils.Print(string(resp))

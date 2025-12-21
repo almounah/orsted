@@ -403,6 +403,8 @@ func HandleTask(t utils.Task) ([]byte, error) {
 		}
 		resp, err := RegisterTaskInModule("silph", data)
 		return resp, err
+	case "stop":
+		panic("something went very wrong")
 
 
 	case "upload":

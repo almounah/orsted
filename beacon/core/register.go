@@ -42,7 +42,11 @@ func RegisterBeacon(p utils.Peer) (string, error) {
 	utils.Print("Prepare Json Bytes for Register -> \n", string(envelopePreparedBytes))
 
 	// Send Request
-	responseBytes, _ := p.SendRequest(envelopePreparedBytes)
+	responseBytes, err := p.SendRequest(envelopePreparedBytes)
+	if err != nil {
+        utils.Print("Error while sending register data network level", err.Error())
+		return "", err
+	}
 	utils.Print("Sent Request, Received -> \n", string(responseBytes))
 
 	// Get Response
