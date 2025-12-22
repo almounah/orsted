@@ -31,7 +31,7 @@ func prettyPrint(data [][]string, headers []string, out io.Writer) {
 func addSingleCommandFromString(commandString string, conn grpc.ClientConnInterface) {
 	switch commandString {
 	case "generate":
-		SetGenerateBeaconCommand()
+		SetGenerateBeaconCommand(conn)
 	case "listener":
 		SetListenerCommands(conn)
 	case "session":

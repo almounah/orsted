@@ -9,6 +9,7 @@ my.db
 *.dll
 *.zip
 *.ps1
+*.shellcode
 main_http
 main_https
 main_tcp

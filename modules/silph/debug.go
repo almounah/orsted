@@ -2,7 +2,7 @@ package main
 
 import "fmt"
 
-var DEBUG = true
+var DEBUG = false
 
 func Println(str... interface{}) {
     if DEBUG {

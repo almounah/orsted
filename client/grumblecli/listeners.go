@@ -98,9 +98,12 @@ func SetListenerCommands(conn grpc.ClientConnInterface) {
 			}
 			var data [][]string
 			for i := 0; i < len(res.GetListener()); i++ {
-				data = append(data, []string{res.GetListener()[i].Id, res.GetListener()[i].Ip, res.GetListener()[i].Port})
+				data = append(data, []string{res.GetListener()[i].Id, 
+					res.GetListener()[i].ListenerType,
+					res.GetListener()[i].Ip,
+					res.GetListener()[i].Port})
 			}
-			prettyPrint(data, []string{"ID", "IP", "PORT"}, c.App.Stdout())
+			prettyPrint(data, []string{"ID", "TYPE", "IP", "PORT"}, c.App.Stdout())
 			return nil
 		},
 	}
