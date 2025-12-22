@@ -52,6 +52,13 @@ func GetSessionByIdFunc(conn grpc.ClientConnInterface, id string) (*orstedrpc.Se
 	return res, err
 }
 
+func StopSessionByIdFunc(conn grpc.ClientConnInterface, id string) (error) {
+	c := orstedrpc.NewOrstedRpcClient(conn)
+	ctx, _ := context.WithTimeout(context.Background(), time.Second)
+	_, err := c.StopSessionById(ctx, &orstedrpc.IdMessage{Id: id})
+	return err
+}
+
 func AddTaskFunc(conn grpc.ClientConnInterface, sessionId string, command string, reqdata []byte, prettyCommand string) (*orstedrpc.Task, error) {
 	c := orstedrpc.NewOrstedRpcClient(conn)
 	ctx, _ := context.WithTimeout(context.Background(), time.Second)

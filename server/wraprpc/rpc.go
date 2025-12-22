@@ -81,6 +81,21 @@ func (s *Server) GetSessionById(c context.Context, i *orstedrpc.IdMessage) (*ors
 	return res, nil
 }
 
+func (s *Server) StopSessionById(c context.Context, i *orstedrpc.IdMessage) (*orstedrpc.EmptyMessage, error) {
+	err := orsteddb.ChangeBeaconStatus(i.Id, "stopped")
+	if err != nil {
+		utils.PrintDebug("Error Get Session Id from DB", err.Error())
+	}
+
+	var t orstedrpc.TaskReq
+	t.BeacondId = i.Id
+	t.Command = "stop"
+	t.PrettyCommand = "Automatic Command: stop"
+
+	s.AddTask(c, &t)
+	return nil, nil
+}
+
 func (s *Server) AddTask(c context.Context, treq *orstedrpc.TaskReq) (*orstedrpc.Task, error) {
     res, err := orsteddb.AddTaskDb(treq)
 	if err != nil {

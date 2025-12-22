@@ -132,3 +132,39 @@ func UpdatePol(beaconId string) error {
 	return nil
 }
  
+func ChangeBeaconStatus(beaconId string, newstatus string) error {
+	db := Initialise()
+	defer db.Close()
+	tx, err := db.Begin(true)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	bkt, err := tx.CreateBucketIfNotExists([]byte("SESSIONS"))
+	if err != nil {
+		return err
+	}
+
+    var s orstedrpc.Session
+
+    buf := bkt.Get([]byte(beaconId))
+    err = proto.Unmarshal(buf, &s);
+	if err != nil {
+		return err
+	} 
+
+    s.Status = newstatus
+    newbuf, err := proto.Marshal(&s)
+    err = bkt.Put([]byte(s.Id), newbuf)
+    if err != nil {
+		return err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return err
+	}
+
+	return nil
+}
+ 

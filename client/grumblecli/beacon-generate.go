@@ -39,6 +39,7 @@ func SetGenerateBeaconCommand() {
 				"--http-proxy-address",
 				"--http-proxy-username",
 				"--http-proxy-password",
+				"--no-console",
 			}
 
 			// complete flags

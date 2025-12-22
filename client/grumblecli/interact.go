@@ -27,7 +27,9 @@ func SetInteractCommands(conn grpc.ClientConnInterface) {
 				Message: "Specify a session :",
 				Options: func() (out []string) {
 					for _, session := range sessionList {
+						if session.Status == "alive" {
 							out = append(out, fmt.Sprintf("%s - %s@%s - %s", session.Id, session.User, session.Hostname, session.Ip))
+						}
 					}
 					return
 				}(),

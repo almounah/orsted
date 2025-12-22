@@ -14,24 +14,24 @@ import (
 	"orsted/protobuf/orstedrpc"
 )
 
-func getBeaconString(beaconId string, sesstionList []*orstedrpc.Session) string{
-    for i := 0; i < len(sesstionList); i++ {
-        if beaconId == sesstionList[i].Id {
-            session := sesstionList[i]
-            user := session.User
-            // TO not get hostname in user
-            temp := strings.SplitN(user, "\\", 2) 
-            if len(temp) > 1 {
-                if temp[0] == session.Hostname {
-                    user = temp[1]
-                }
-            }
+func getBeaconString(beaconId string, sesstionList []*orstedrpc.Session) string {
+	for i := 0; i < len(sesstionList); i++ {
+		if beaconId == sesstionList[i].Id {
+			session := sesstionList[i]
+			user := session.User
+			// TO not get hostname in user
+			temp := strings.SplitN(user, "\\", 2)
+			if len(temp) > 1 {
+				if temp[0] == session.Hostname {
+					user = temp[1]
+				}
+			}
 
-            res := fmt.Sprintf("(%s/%s) %s: %s@%s", session.Transport, session.Os, beaconId, user, session.Ip)
-            return res
-        }
-    }
-    return "ERROR in GETTING INFO"
+			res := fmt.Sprintf("(%s/%s) %s: %s@%s", session.Transport, session.Os, beaconId, user, session.Ip)
+			return res
+		}
+	}
+	return "ERROR in GETTING INFO"
 }
 
 func addBeaconToTree(beaconId string, chain []string, addedBeaconToTree map[string]treeprint.Tree, sessionList []*orstedrpc.Session) {
@@ -64,7 +64,6 @@ func addBeaconToTree(beaconId string, chain []string, addedBeaconToTree map[stri
 	}
 }
 
-
 func SetSessionCommands(conn grpc.ClientConnInterface) {
 	sessionCmd := &grumble.Command{
 		Name: "session",
@@ -74,8 +73,13 @@ func SetSessionCommands(conn grpc.ClientConnInterface) {
 	listCmd := &grumble.Command{
 		Name: "list",
 		Help: "list current sessions",
+		Flags: func(f *grumble.Flags) {
+			f.Bool("a", "all", false, "if specified will show all session. even stopped one")
+		},
 		Run: func(c *grumble.Context) error {
 			// Implement the logic to start the listener
+
+			all := c.Flags.Bool("all")
 			res, err := clientrpc.ListSessionFunc(conn)
 			if err != nil {
 				fmt.Println("Error Occured ", err.Error())
@@ -83,17 +87,20 @@ func SetSessionCommands(conn grpc.ClientConnInterface) {
 			}
 			var data [][]string
 			for i := 0; i < len(res.GetSessions()); i++ {
-				data = append(data, []string{
-					res.GetSessions()[i].Id,
-					res.GetSessions()[i].Ip,
-					res.GetSessions()[i].Hostname,
-					res.GetSessions()[i].User,
-					res.GetSessions()[i].Integrity,
-					res.GetSessions()[i].Os,
-					strconv.FormatInt(time.Now().Unix()-res.GetSessions()[i].Lastseen, 10),
-				})
+				if all || res.GetSessions()[i].Status == "alive" {
+					data = append(data, []string{
+						res.GetSessions()[i].Id,
+						res.GetSessions()[i].Ip,
+						res.GetSessions()[i].Hostname,
+						res.GetSessions()[i].User,
+						res.GetSessions()[i].Integrity,
+						res.GetSessions()[i].Os,
+						strconv.FormatInt(time.Now().Unix()-res.GetSessions()[i].Lastseen, 10),
+						res.GetSessions()[i].Status,
+					})
+				}
 			}
-			prettyPrint(data, []string{"ID", "IP", "HOSTNAME", "USER", "INTEGRITY", "OS", "POL"}, c.App.Stdout())
+			prettyPrint(data, []string{"ID", "IP", "HOSTNAME", "USER", "INTEGRITY", "OS", "POL", "STATUS"}, c.App.Stdout())
 			return nil
 		},
 	}
@@ -111,7 +118,7 @@ func SetSessionCommands(conn grpc.ClientConnInterface) {
 			var addedSessionInTree map[string]treeprint.Tree
 			addedSessionInTree = make(map[string]treeprint.Tree)
 			tree := treeprint.New()
-            treeprint.IndentSize = 7
+			treeprint.IndentSize = 7
 			// Added Server / Firewall Node
 			addedSessionInTree["0"] = tree
 			for i := 0; i < len(res.GetSessions()); i++ {
@@ -133,6 +140,24 @@ func SetSessionCommands(conn grpc.ClientConnInterface) {
 		},
 	}
 
+	stopCmd := &grumble.Command{
+		Name: "stop",
+		Help: "stop the session by sending stop task to beacon and marking beacon as stopped",
+		Args: func(f *grumble.Args) {
+			f.String("id", "id of the session")
+		},
+		Run: func(c *grumble.Context) error {
+			// Implement the logic to start the listener
+			err := clientrpc.StopSessionByIdFunc(conn, c.Args.String("id"))
+			if err != nil {
+				fmt.Println("Error Occured ", err.Error())
+				return nil
+			}
+			fmt.Println("Stopped session ", c.Args.String("id"))
+			return nil
+		},
+	}
+
 	interactCmd := &grumble.Command{
 		Name: "interact",
 		Help: "provide another way to interact with session",
@@ -143,41 +168,39 @@ func SetSessionCommands(conn grpc.ClientConnInterface) {
 			// Implement the logic to start the listener
 			sessionID := c.Args.String("id")
 			res, err := clientrpc.ListSessionFunc(conn)
-            sessionList := res.GetSessions()
+			sessionList := res.GetSessions()
 			if err != nil {
 				fmt.Println("Error Occured ", err.Error())
 				return nil
 			}
 
-
-
 			for _, session := range sessionList {
-                if session.Id == sessionID {
-                    SelectedSession = session
-                }
-            }
+				if session.Id == sessionID {
+					SelectedSession = session
+				}
+			}
 
-            // Avoid having Hostname in Username if user is local
-            user := SelectedSession.User
-            temp := strings.SplitN(user, "\\", 2) 
-            if len(temp) > 1 {
-                if temp[0] == SelectedSession.Hostname {
-                    user = temp[1]
-                }
-            }
-            // Change Prompt
+			// Avoid having Hostname in Username if user is local
+			user := SelectedSession.User
+			temp := strings.SplitN(user, "\\", 2)
+			if len(temp) > 1 {
+				if temp[0] == SelectedSession.Hostname {
+					user = temp[1]
+				}
+			}
+			// Change Prompt
 			c.App.SetPrompt(fmt.Sprintf("[Session %s: %s@%s] » ", SelectedSession.Id, user, SelectedSession.Hostname))
 
-            // Reset Commands 
-            SetCommands(conn)
+			// Reset Commands
+			SetCommands(conn)
 
 			return nil
 		},
 	}
 
-
 	sessionCmd.AddCommand(treeCmd)
 	sessionCmd.AddCommand(interactCmd)
 	sessionCmd.AddCommand(listCmd)
+	sessionCmd.AddCommand(stopCmd)
 	app.AddCommand(sessionCmd)
 }
