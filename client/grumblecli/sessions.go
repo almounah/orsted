@@ -153,7 +153,7 @@ func SetSessionCommands(conn grpc.ClientConnInterface) {
 				fmt.Println("Error Occured ", err.Error())
 				return nil
 			}
-			fmt.Println("Stopped session ", c.Args.String("id"))
+			fmt.Println("Stopped session", c.Args.String("id"))
 			return nil
 		},
 	}
