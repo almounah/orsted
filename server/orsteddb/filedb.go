@@ -10,9 +10,9 @@ import (
 )
 
 func HashBytes(d []byte) [16]byte {
-	fmt.Println("Hashing")
+	utils.PrintDebug("Hashing")
 	res := md5.Sum(d)
-	fmt.Println("Done")
+	utils.PrintDebug("Done")
 	return res
 }
 
@@ -94,4 +94,22 @@ func ConvertTaskDataHashToByte(db *bolt.DB, taskWithHash *orstedrpc.Task) (*orst
 	task.TaskId = taskWithHash.TaskId
 
 	return &task, nil
+}
+
+func ConvertHostDataHashToByte(db *bolt.DB, hostWithHash *orstedrpc.Host) (*orstedrpc.Host, error) {
+	utils.PrintDebug("Converting Host Data Hash")
+	if hostWithHash == nil {
+		return nil, fmt.Errorf("Nil host as input")
+	}
+
+	hash := hostWithHash.Data
+	f, err := RetrieveFileFromOpenDb(db, hash)
+	if err != nil {
+        return nil, err
+	}
+	var hostClean orstedrpc.Host
+	hostClean.Filename = hostWithHash.Filename
+	hostClean.Data = f
+
+	return &hostClean, nil
 }

@@ -254,7 +254,7 @@ func SetGenerateBeaconCommand(conn grpc.ClientConnInterface) {
 				}
 			}
 			if beaconPath == "" {
-				fmt.Println("Error Occured, loader path not found")
+				fmt.Println("Error Occured, beacon Path not found")
 				return nil
 			}
 
@@ -465,7 +465,7 @@ func SetGenerateBeaconCommand(conn grpc.ClientConnInterface) {
 				}
 			}
 			if amsiPath == "" {
-				fmt.Println("Error Occured, loader path not found")
+				fmt.Println("Error Occured, amsi path not found")
 				return nil
 			}
 
