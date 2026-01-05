@@ -22,6 +22,7 @@ type OrstedRpcClient interface {
 	DeleteListener(ctx context.Context, in *ListenerJob, opts ...grpc.CallOption) (*EmptyMessage, error)
 	ListSessions(ctx context.Context, in *EmptyMessage, opts ...grpc.CallOption) (*SessionList, error)
 	GetSessionById(ctx context.Context, in *IdMessage, opts ...grpc.CallOption) (*Session, error)
+	StopSessionById(ctx context.Context, in *IdMessage, opts ...grpc.CallOption) (*EmptyMessage, error)
 	AddTask(ctx context.Context, in *TaskReq, opts ...grpc.CallOption) (*Task, error)
 	ListTask(ctx context.Context, in *Session, opts ...grpc.CallOption) (*TaskList, error)
 	GetSingleTask(ctx context.Context, in *Task, opts ...grpc.CallOption) (*Task, error)
@@ -81,6 +82,15 @@ func (c *orstedRpcClient) ListSessions(ctx context.Context, in *EmptyMessage, op
 func (c *orstedRpcClient) GetSessionById(ctx context.Context, in *IdMessage, opts ...grpc.CallOption) (*Session, error) {
 	out := new(Session)
 	err := c.cc.Invoke(ctx, "/protobuf.OrstedRpc/GetSessionById", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *orstedRpcClient) StopSessionById(ctx context.Context, in *IdMessage, opts ...grpc.CallOption) (*EmptyMessage, error) {
+	out := new(EmptyMessage)
+	err := c.cc.Invoke(ctx, "/protobuf.OrstedRpc/StopSessionById", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -186,6 +196,7 @@ type OrstedRpcServer interface {
 	DeleteListener(context.Context, *ListenerJob) (*EmptyMessage, error)
 	ListSessions(context.Context, *EmptyMessage) (*SessionList, error)
 	GetSessionById(context.Context, *IdMessage) (*Session, error)
+	StopSessionById(context.Context, *IdMessage) (*EmptyMessage, error)
 	AddTask(context.Context, *TaskReq) (*Task, error)
 	ListTask(context.Context, *Session) (*TaskList, error)
 	GetSingleTask(context.Context, *Task) (*Task, error)
@@ -217,6 +228,9 @@ func (UnimplementedOrstedRpcServer) ListSessions(context.Context, *EmptyMessage)
 }
 func (UnimplementedOrstedRpcServer) GetSessionById(context.Context, *IdMessage) (*Session, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetSessionById not implemented")
+}
+func (UnimplementedOrstedRpcServer) StopSessionById(context.Context, *IdMessage) (*EmptyMessage, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method StopSessionById not implemented")
 }
 func (UnimplementedOrstedRpcServer) AddTask(context.Context, *TaskReq) (*Task, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddTask not implemented")
@@ -347,6 +361,24 @@ func _OrstedRpc_GetSessionById_Handler(srv interface{}, ctx context.Context, dec
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(OrstedRpcServer).GetSessionById(ctx, req.(*IdMessage))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _OrstedRpc_StopSessionById_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(IdMessage)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OrstedRpcServer).StopSessionById(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/protobuf.OrstedRpc/StopSessionById",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OrstedRpcServer).StopSessionById(ctx, req.(*IdMessage))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -554,6 +586,10 @@ var _OrstedRpc_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetSessionById",
 			Handler:    _OrstedRpc_GetSessionById_Handler,
+		},
+		{
+			MethodName: "StopSessionById",
+			Handler:    _OrstedRpc_StopSessionById_Handler,
 		},
 		{
 			MethodName: "AddTask",

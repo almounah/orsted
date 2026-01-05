@@ -10,9 +10,16 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"orsted/protobuf/orstedrpc"
+	"orsted/server/utils"
 )
 
 func AddTaskDb(treq *orstedrpc.TaskReq) (*orstedrpc.Task, error) {
+	utils.PrintDebug("Adding Task")
+	// Hash request Data to avoid storing it multiple times in DB
+	h, err := AddFileToDb(treq.Reqdata)
+	if err != nil {
+		return nil, err
+	}
 	db := Initialise()
 	defer db.Close()
 	tx, err := db.Begin(true)
@@ -36,7 +43,7 @@ func AddTaskDb(treq *orstedrpc.TaskReq) (*orstedrpc.Task, error) {
                            State: "pending",       
                            Command: treq.Command,
                            PrettyCommand: treq.PrettyCommand,
-                           Reqdata: treq.Reqdata,
+                           Reqdata: h,
                            SentAt: time.Now().Unix()}
 
 	if buf, err := proto.Marshal(res); err != nil {
@@ -53,6 +60,7 @@ func AddTaskDb(treq *orstedrpc.TaskReq) (*orstedrpc.Task, error) {
 }
 
 func ChangeTaskState(taskId string, state string) error {
+	utils.PrintDebug("Changing Task State")
 	db := Initialise()
 	defer db.Close()
 	tx, err := db.Begin(true)
@@ -89,6 +97,7 @@ func ChangeTaskState(taskId string, state string) error {
 }
 
 func ListTasksDb(beaconId string, states []string) (*orstedrpc.TaskList, error) {
+	utils.PrintDebug("Listing Task")
 	db := Initialise()
 	defer db.Close()
 	tx, err := db.Begin(true)
@@ -109,7 +118,10 @@ func ListTasksDb(beaconId string, states []string) (*orstedrpc.TaskList, error) 
 		var m orstedrpc.Task
 		proto.Unmarshal(v, &m)
         if m.BeacondId == beaconId && slices.Contains(states, m.State) {
-            data = append(data, &m)
+			converted, err := ConvertTaskDataHashToByte(db, &m)
+			if err == nil {
+				data = append(data, converted)
+			}
         }
 	}
     res := &orstedrpc.TaskList{BeaconId: beaconId, Tasks: data}
@@ -118,6 +130,7 @@ func ListTasksDb(beaconId string, states []string) (*orstedrpc.TaskList, error) 
 }
 
 func GetTaskState(taskId string) (string, error) {
+	utils.PrintDebug("Getting Task State")
 	db := Initialise()
 	defer db.Close()
 	tx, err := db.Begin(true)
@@ -143,6 +156,7 @@ func GetTaskState(taskId string) (string, error) {
 }
 
 func SetTaskResponse(trep *orstedrpc.TaskRep) (*orstedrpc.Task, error) {
+	utils.PrintDebug("Setting Task Response")
 	db := Initialise()
 	defer db.Close()
 	tx, err := db.Begin(true)
@@ -184,6 +198,7 @@ func SetTaskResponse(trep *orstedrpc.TaskRep) (*orstedrpc.Task, error) {
 }
 
 func GetTaskByIdDb(taskId string) (*orstedrpc.Task, error) {
+	utils.PrintDebug("Getting Task by ID")
 	db := Initialise()
 	defer db.Close()
 	tx, err := db.Begin(true)
@@ -203,7 +218,11 @@ func GetTaskByIdDb(taskId string) (*orstedrpc.Task, error) {
 		var m orstedrpc.Task
 		proto.Unmarshal(v, &m)
         if m.TaskId == taskId {
-            return &m, nil
+			t, err := ConvertTaskDataHashToByte(db, &m)
+			if err != nil {
+				return nil, errors.New("Beacon Id Not Found")
+			}
+            return t, nil
         }
 	}
 	return nil, errors.New("Beacon Id Not Found")

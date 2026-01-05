@@ -136,6 +136,7 @@ service OrstedRpc {
 
     rpc ListSessions(EmptyMessage) returns (SessionList);
     rpc GetSessionById(IdMessage) returns (Session);
+    rpc StopSessionById(IdMessage) returns (EmptyMessage);
 
     rpc AddTask(TaskReq) returns (Task);
     rpc ListTask(Session) returns (TaskList);

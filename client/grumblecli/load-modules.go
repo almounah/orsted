@@ -20,7 +20,7 @@ func SetLoadModuleCommand(conn grpc.ClientConnInterface) {
 			a.String("module", "module to load")
 		},
         Completer: func(prefix string, args []string) []string {
-            modulesList := []string{"inline-clr", "run", "ps", "download", "upload", "evasion", "execute-assembly", "shell", "runas", "ls", "procdump", "token", "powercliff"}
+            modulesList := []string{"inline-clr", "run", "ps", "download", "upload", "evasion", "execute-assembly", "shell", "runas", "ls", "procdump", "token", "powercliff", "silph", "winrm", "psexec"}
             var suggestions []string
             for _, moduleName := range modulesList {
                 if strings.HasPrefix(moduleName, prefix) {

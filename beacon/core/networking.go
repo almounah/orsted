@@ -71,12 +71,17 @@ func RetreiveTask(p utils.Peer, id string) (*utils.Tasks, error) {
 	envelopePreparedBytes, _ := p.PrepareRetreiveTasksData(jsonEnvelopeBytes)
 
 	// Send Request
-	responseBytes, _ := p.SendRequest(envelopePreparedBytes)
+	responseBytes, err := p.SendRequest(envelopePreparedBytes)
+	if err != nil {
+		utils.Print("Error while getting task list at Nework level -> ", err.Error())
+		utils.Print("Sent following request to get task ->", string(envelopePreparedBytes))
+		return nil, err
+	}
 
 	// Get Response
 	envelopeResponseBytes, _ := p.CleanRespFromPeerProtocol(responseBytes)
 	var envelopeResponse utils.Envelope
-	err := json.Unmarshal(envelopeResponseBytes, &envelopeResponse)
+	err = json.Unmarshal(envelopeResponseBytes, &envelopeResponse)
 	if err != nil {
 		utils.Print("Error while getting task list -> ", err.Error())
 		utils.Print("Sent following request to get task ->", string(envelopePreparedBytes))

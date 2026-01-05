@@ -26,6 +26,7 @@ windowsmodules=(
   "runas"
   "ps"
   "winrm"
+  "silph"
 )
 
 #sudo apt install protoc-gen-go-grpc
@@ -72,14 +73,14 @@ compile_client_server() {
     echo "##################################"
     echo
 
-    echo "[+] Compiling server ..."
+    echo "[+] Compiling client ..."
     if ! go build -ldflags="-s -w" -o orsted-client client/main.go; then
         echo "[-] Failed to compile server"
         return 1
     fi
     echo "[+] Server compiled successfully"
 
-    echo "[+] Compiling client ..."
+    echo "[+] Compiling server ..."
     if ! go build -ldflags="-s -w" -o orsted-server server/main.go; then
         echo "[-] Failed to compile client"
         return 1

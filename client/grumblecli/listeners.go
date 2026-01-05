@@ -98,9 +98,12 @@ func SetListenerCommands(conn grpc.ClientConnInterface) {
 			}
 			var data [][]string
 			for i := 0; i < len(res.GetListener()); i++ {
-				data = append(data, []string{res.GetListener()[i].Id, res.GetListener()[i].Ip, res.GetListener()[i].Port})
+				data = append(data, []string{res.GetListener()[i].Id, 
+					res.GetListener()[i].ListenerType,
+					res.GetListener()[i].Ip,
+					res.GetListener()[i].Port})
 			}
-			prettyPrint(data, []string{"ID", "IP", "PORT"}, c.App.Stdout())
+			prettyPrint(data, []string{"ID", "TYPE", "IP", "PORT"}, c.App.Stdout())
 			return nil
 		},
 	}
@@ -108,17 +111,17 @@ func SetListenerCommands(conn grpc.ClientConnInterface) {
 	deleteCmd := &grumble.Command{
 		Name: "stop",
 		Help: "Stop and Delete a listener",
-		Flags: func(f *grumble.Flags) {
-			f.String("i", "id", "", "Id of the listener")
+		Args: func(f *grumble.Args) {
+			f.String("id", "Id of the listener")
 		},
 		Run: func(c *grumble.Context) error {
 			// Implement the logic to start the listener
-			err := clientrpc.DeleteListenerFunc(conn, c.Flags.String("id"))
+			err := clientrpc.DeleteListenerFunc(conn, c.Args.String("id"))
 			if err != nil {
 				fmt.Println("Error Occured ", err.Error())
 				return nil
 			}
-			c.App.Println("Deleted Listener ", c.Flags.String("id"))
+			c.App.Println("Deleted Listener ", c.Args.String("id"))
 			return nil
 		},
 	}

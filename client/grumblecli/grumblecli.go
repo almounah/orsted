@@ -31,7 +31,7 @@ func prettyPrint(data [][]string, headers []string, out io.Writer) {
 func addSingleCommandFromString(commandString string, conn grpc.ClientConnInterface) {
 	switch commandString {
 	case "generate":
-		SetGenerateBeaconCommand()
+		SetGenerateBeaconCommand(conn)
 	case "listener":
 		SetListenerCommands(conn)
 	case "session":
@@ -88,6 +88,8 @@ func addSingleCommandFromString(commandString string, conn grpc.ClientConnInterf
 		SetWinrmCommand(conn)
 	case "batcave":
 		SetBatcaveCommands(conn)
+	case "silph":
+		SetSilphCommand(conn)
 	case "help":
 		// Use default grumble help
 		return

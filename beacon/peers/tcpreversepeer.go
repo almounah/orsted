@@ -101,7 +101,7 @@ func (trp *TCPReversePeer) GetRealTimeConn(beaconId string) (net.Conn, error) {
 func (trp *TCPReversePeer) SendRequest(dataToSend []byte) ([]byte, error) {
 	conn, err := net.Dial("tcp", trp.Ip+":"+trp.Port)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	defer conn.Close()
 
@@ -114,7 +114,7 @@ func (trp *TCPReversePeer) SendRequest(dataToSend []byte) ([]byte, error) {
 	resp, _ := bufio.NewReader(conn).ReadBytes(byte('\n'))
 	utils.Print("You won't see me")
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	//utils.Print(string(resp))

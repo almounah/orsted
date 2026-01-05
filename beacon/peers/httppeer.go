@@ -143,7 +143,7 @@ func (hp *HTTPPeer) SendRequest(dataToSend []byte) ([]byte, error) {
 	}
 	utils.Print("Done Getting HTTP Proxy Conn")
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	defer conn.Close()
 
@@ -151,7 +151,7 @@ func (hp *HTTPPeer) SendRequest(dataToSend []byte) ([]byte, error) {
 
 	resp, err := io.ReadAll(conn) // Read everything until connection closes
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	//utils.Print(string(resp))

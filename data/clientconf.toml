@@ -10,15 +10,25 @@ BatcaveJsonPath = "./tools/"
 BatcaveURL = "https://github.com/exploration-batcave/batcave"
 
 # Windows Arsenal
+## General Tooling
 NetAssemblyPath = "./tools/windows/dotnet/"
 Ps1ScriptPath = "./tools/windows/ps1/"
 ExePath = "./tools/windows/exe/"
 WindowsModulePath = "./tools/compiled-modules/windows/"
+
+## Donut Path
+DonutPath = "./tools/donut"
+
+## PowerShell Web Delivery
+DefaultAmsiBypass = "./tools/windows/pwshwebdelivery/bypass.ps1"
+DefaultLoaderTemplate = "./tools/windows/pwshwebdelivery/loader.ps1"
+BeaconShellCodePath = "./tools/windows/pwshwebdelivery/beacon.shellcode"
+
 
 # Linux Arsenal
 LinuxModulePath = "./tools/compiled-modules/linux/"
 
 # Command Info
 LinuxCommands = ["back", "load-module", "sleep", "interact", "session", "task", "shell", "socks", "pivot", "download", "upload", "run", "ls", "autoroute", "cat", "batcave"]
-WindowsCommands = ["back", "load-module", "sleep", "interact", "session", "task", "shell", "socks", "inline-clr", "execute-assembly", "evasion", "run", "upload", "download", "pivot", "ps", "token", "runas", "ls", "autoroute", "procdump", "cat", "psexec", "powercliff", "winrm", "batcave"]
+WindowsCommands = ["back", "load-module", "sleep", "interact", "session", "task", "shell", "socks", "inline-clr", "execute-assembly", "evasion", "run", "upload", "download", "pivot", "ps", "token", "runas", "ls", "autoroute", "procdump", "cat", "psexec", "powercliff", "winrm", "batcave", "silph"]
 GlobalCommands = ["hoster", "socks", "listener", "generate", "session", "task", "interact", "autoroute", "batcave"]
