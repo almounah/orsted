@@ -17,6 +17,12 @@ var (
 	shellcodePath string = "tools/donut.shellcode"
 )
 
+func fileExists(path string) bool {
+	_, err := os.Stat(path)
+	return err == nil
+}
+
+
 func SetAssembluExecCommand(conn grpc.ClientConnInterface) {
 	assemblyExecCmd := &grumble.Command{
 		Name: "execute-assembly",
@@ -58,16 +64,26 @@ func SetAssembluExecCommand(conn grpc.ClientConnInterface) {
 				assemblyArgs += " "
 
 			}
+
+			pathOfExe := Conf.ExePath + assemblyName
+			if !fileExists(pathOfExe) {
+				pathOfExe = Conf.NetAssemblyPath + assemblyName
+			}
+			if !fileExists(pathOfExe) {
+				fmt.Println("File not found in ", pathOfExe)
+				return nil
+			}
+
 			args := []string{
 				"-f", "1",
 				"-m", "RunMe",
 				"-x", "2",
 				"-p", assemblyArgs,
 				"-o", shellcodePath,
-				"-i", Conf.NetAssemblyPath + assemblyName,
+				"-i", pathOfExe,
 			}
 			cmd := exec.Command(donutPath, args...)
-		    _, err := cmd.Output()
+			_, err := cmd.Output()
 			if err != nil {
 				fmt.Println("Error executing Donut command:", err)
 				return nil
