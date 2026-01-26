@@ -42,6 +42,13 @@ func ListRoute() *orstedrpc.RouteList {
 		route.RouteId = c.RouteId
 		route.BeaconId = c.BeaconId
 		route.Subnet = strings.Join(c.Subnet, ", ")
+		// Pretty Print Forwarded Port
+		var RportfwdString []string 
+		for i := 0; i < len(c.ForwardedPort); i++ {
+			RportfwdString = append(RportfwdString, c.ForwardedPort[i].LocalDst + "<-->" + c.ForwardedPort[i].RemoteSrc)
+			
+		}
+		route.Rportfwd = strings.Join(RportfwdString, ", ")
 		ListOfRoute = append(ListOfRoute, &route)
 	}
 
@@ -70,3 +77,33 @@ func DeleteSubnetRoute(beaconId, subnet string) error {
 	return nil
 	
 }
+
+func AddReversePortForwardInRoute(beacondId string, remoteSrc, localDst string) error {
+	// Check if route already exists
+	var r *Route
+	for _, c := range ROUTE_LIST {
+		if c.BeaconId == beacondId {
+			r = c
+		}
+	}
+
+	// If it is just send the command to Rev PortForward
+	if r != nil {
+		err := r.SendInstructionToRPortFwd(remoteSrc, localDst)
+		if err != nil {
+			fmt.Println("Error ", err)
+			return err
+		}
+		r.ForwardedPort = append(r.ForwardedPort, RPortForward{RemoteSrc: remoteSrc, LocalDst: localDst})
+		return fmt.Errorf("Beacon already ligoloing, will instruct to rportfwd")
+	}
+
+	// Otherwise create Empty Route that will be populated if Websocket Success
+	NewEmptyRouteForReverseForward(beacondId, remoteSrc, localDst)
+	
+
+	return nil
+}
+
+
+

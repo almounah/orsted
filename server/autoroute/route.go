@@ -20,11 +20,13 @@ import (
 )
 
 type Route struct {
-	RouteId   string
-	Subnet    []string
-	BeaconId  string
-	ProxyConn net.Conn
-	Active    bool
+	RouteId       string
+	Subnet        []string
+	ForwardedPort []RPortForward
+	BeaconId      string
+	ProxyConn     net.Conn
+	Session       *yamux.Session
+	Active        bool
 }
 
 var ROUTE_LIST []*Route
@@ -51,7 +53,7 @@ func ActivateRoute(beaconId string, wsConn net.Conn) error {
 	}
 	r.ProxyConn = wsConn
 
-	if len(r.Subnet) != 1 {
+	if len(r.Subnet) != 1 && len(r.Subnet) != 0 {
 		return fmt.Errorf("Error in design, Activating a route with multiple subnet ?!")
 	}
 
@@ -63,16 +65,26 @@ func ActivateRoute(beaconId string, wsConn net.Conn) error {
 		return err
 	}
 
-	err = r.AddRouteToTun(r.Subnet[0])
-	if err != nil {
-		r.StopRoute()
-		return err
+	// Start a subnet if the route was create for that. In that case r.Subnet will contain the only subnet
+	if len(r.Subnet) == 1 {
+		err = r.AddRouteToTun(r.Subnet[0])
+		if err != nil {
+			r.StopRoute()
+			return err
+		}
 	}
 
-	
-
-	go r.StartRoute()
+	r.StartRoute()
 	r.Active = true
+
+	// Start revportfwd if the route was create for that. In that case r.ForwardedPort will contain the only Port to rev forward
+	if len(r.ForwardedPort) == 1 {
+		err = r.SendInstructionToRPortFwd(r.ForwardedPort[0].RemoteSrc, r.ForwardedPort[0].LocalDst)
+		if err != nil {
+			r.StopRoute()
+			return err
+		}
+	}
 	return nil
 }
 
@@ -110,11 +122,9 @@ func (r *Route) AddRouteToTun(route string) error {
 		return fmt.Errorf("failed to add route: %v\nOutput: %s", err, string(cmd3Out))
 	}
 
-
 	return nil
 
 }
-
 
 func (r *Route) StartRoute() error {
 
@@ -169,6 +179,7 @@ func (r *Route) StartRoute() error {
 	cfg.ConnectionWriteTimeout = 120 * time.Second
 
 	session, err := yamux.Client(r.ProxyConn, nil)
+	r.Session = session
 	if err != nil {
 		fmt.Println("Error in creating yamux client ", err)
 

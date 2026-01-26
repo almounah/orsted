@@ -101,6 +101,8 @@ func addSingleCommandFromString(commandString string, conn grpc.ClientConnInterf
 		SetBatcaveCommands(conn)
 	case "silph":
 		SetSilphCommand(conn)
+	case "rportfwd":
+		SetRportFwdCommand(conn)
 	case "help":
 		// Use default grumble help
 		return

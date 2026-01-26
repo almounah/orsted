@@ -5,7 +5,6 @@ import (
 	"orsted/protobuf/eventrpc"
 	"sync"
 
-	"google.golang.org/grpc"
 )
 
 
@@ -17,7 +16,7 @@ type EventServer struct {
 
 var EventServerVar = &EventServer{Clients: make(map[eventrpc.Notifier_SubscribeServer]struct{})}
 
-func (s *EventServer) Subscribe(r *eventrpc.SubscribeRequest, stream grpc.ServerStreamingServer[eventrpc.Notification]) error {
+func (s *EventServer) Subscribe(r *eventrpc.SubscribeRequest, stream eventrpc.Notifier_SubscribeServer) error {
     s.mu.Lock()
 	s.Clients[stream] = struct{}{}
 	s.mu.Unlock()

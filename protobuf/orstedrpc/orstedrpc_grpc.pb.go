@@ -33,6 +33,8 @@ type OrstedRpcClient interface {
 	AddRoute(ctx context.Context, in *RouteReq, opts ...grpc.CallOption) (*Route, error)
 	DeleteRoute(ctx context.Context, in *Route, opts ...grpc.CallOption) (*ResultMessage, error)
 	ListRoute(ctx context.Context, in *EmptyMessage, opts ...grpc.CallOption) (*RouteList, error)
+	AddRevPortFwd(ctx context.Context, in *RevPortFwdReq, opts ...grpc.CallOption) (*Route, error)
+	DeleteRevPortFwd(ctx context.Context, in *Route, opts ...grpc.CallOption) (*ResultMessage, error)
 }
 
 type orstedRpcClient struct {
@@ -187,6 +189,24 @@ func (c *orstedRpcClient) ListRoute(ctx context.Context, in *EmptyMessage, opts 
 	return out, nil
 }
 
+func (c *orstedRpcClient) AddRevPortFwd(ctx context.Context, in *RevPortFwdReq, opts ...grpc.CallOption) (*Route, error) {
+	out := new(Route)
+	err := c.cc.Invoke(ctx, "/protobuf.OrstedRpc/AddRevPortFwd", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *orstedRpcClient) DeleteRevPortFwd(ctx context.Context, in *Route, opts ...grpc.CallOption) (*ResultMessage, error) {
+	out := new(ResultMessage)
+	err := c.cc.Invoke(ctx, "/protobuf.OrstedRpc/DeleteRevPortFwd", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // OrstedRpcServer is the server API for OrstedRpc service.
 // All implementations must embed UnimplementedOrstedRpcServer
 // for forward compatibility
@@ -207,6 +227,8 @@ type OrstedRpcServer interface {
 	AddRoute(context.Context, *RouteReq) (*Route, error)
 	DeleteRoute(context.Context, *Route) (*ResultMessage, error)
 	ListRoute(context.Context, *EmptyMessage) (*RouteList, error)
+	AddRevPortFwd(context.Context, *RevPortFwdReq) (*Route, error)
+	DeleteRevPortFwd(context.Context, *Route) (*ResultMessage, error)
 	mustEmbedUnimplementedOrstedRpcServer()
 }
 
@@ -261,6 +283,12 @@ func (UnimplementedOrstedRpcServer) DeleteRoute(context.Context, *Route) (*Resul
 }
 func (UnimplementedOrstedRpcServer) ListRoute(context.Context, *EmptyMessage) (*RouteList, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListRoute not implemented")
+}
+func (UnimplementedOrstedRpcServer) AddRevPortFwd(context.Context, *RevPortFwdReq) (*Route, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddRevPortFwd not implemented")
+}
+func (UnimplementedOrstedRpcServer) DeleteRevPortFwd(context.Context, *Route) (*ResultMessage, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteRevPortFwd not implemented")
 }
 func (UnimplementedOrstedRpcServer) mustEmbedUnimplementedOrstedRpcServer() {}
 
@@ -563,6 +591,42 @@ func _OrstedRpc_ListRoute_Handler(srv interface{}, ctx context.Context, dec func
 	return interceptor(ctx, in, info, handler)
 }
 
+func _OrstedRpc_AddRevPortFwd_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RevPortFwdReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OrstedRpcServer).AddRevPortFwd(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/protobuf.OrstedRpc/AddRevPortFwd",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OrstedRpcServer).AddRevPortFwd(ctx, req.(*RevPortFwdReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _OrstedRpc_DeleteRevPortFwd_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Route)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OrstedRpcServer).DeleteRevPortFwd(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/protobuf.OrstedRpc/DeleteRevPortFwd",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OrstedRpcServer).DeleteRevPortFwd(ctx, req.(*Route))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _OrstedRpc_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "protobuf.OrstedRpc",
 	HandlerType: (*OrstedRpcServer)(nil),
@@ -630,6 +694,14 @@ var _OrstedRpc_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListRoute",
 			Handler:    _OrstedRpc_ListRoute_Handler,
+		},
+		{
+			MethodName: "AddRevPortFwd",
+			Handler:    _OrstedRpc_AddRevPortFwd_Handler,
+		},
+		{
+			MethodName: "DeleteRevPortFwd",
+			Handler:    _OrstedRpc_DeleteRevPortFwd_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
