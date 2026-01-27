@@ -22,6 +22,10 @@ func SetRportFwdCommand(conn grpc.ClientConnInterface) {
 			f.String("r", "remote", "", "Remote Address to Port Forward. Ex. 0.0.0.0:8000")
 		},
 		Run: func(c *grumble.Context) error {
+			if SelectedSession == nil {
+				fmt.Println("Select a session before adding rportfwd. Use interact or sessions interact command")
+				return nil
+			}
 			localAddress := c.Flags.String("local")
 			remoteAddress := c.Flags.String("remote")
 			if localAddress == "" || remoteAddress == "" {

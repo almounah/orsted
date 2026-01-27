@@ -144,17 +144,51 @@ func SetSessionCommands(conn grpc.ClientConnInterface) {
 		Name: "stop",
 		Help: "stop the session by sending stop task to beacon and marking beacon as stopped",
 		Args: func(f *grumble.Args) {
-			f.String("id", "id of the session")
+			f.String("id", "id of the session. Session range are supported. session stop 6-10 will stop session from 6 to 10 included.")
 		},
 		Run: func(c *grumble.Context) error {
-			// Implement the logic to start the listener
-			err := clientrpc.StopSessionByIdFunc(conn, c.Args.String("id"))
-			if err != nil {
-				fmt.Println("Error Occured ", err.Error())
+
+			idSessions := c.Args.String("id")
+			idSessionsSplitted := strings.Split(idSessions, "-")
+
+			if len(idSessionsSplitted) == 1 {
+				// Implement the logic to start the listener
+				err := clientrpc.StopSessionByIdFunc(conn, idSessions)
+				if err != nil {
+					fmt.Println("Error Occured ", err.Error())
+					return nil
+				}
+				fmt.Println("Stopped session", c.Args.String("id"))
 				return nil
 			}
-			fmt.Println("Stopped session", c.Args.String("id"))
+
+			if len(idSessionsSplitted) == 2 {
+				sessionStart, err := strconv.Atoi(idSessionsSplitted[0])
+				if err != nil {
+					fmt.Println("Invalid Format: ", err.Error())
+					return nil
+				}
+				sessionEnd, err := strconv.Atoi(idSessionsSplitted[1])
+				if err != nil {
+					fmt.Println("Invalid Format: ", err.Error())
+					return nil
+				}
+
+				for i := sessionStart; i < sessionEnd+1; i++ {
+					sessionString := strconv.Itoa(i)
+					err := clientrpc.StopSessionByIdFunc(conn, sessionString)
+					if err != nil {
+						fmt.Println("Error Occured while stopping session"+sessionString+": ", err.Error())
+					}
+
+				}
+				fmt.Println("Stopped sessions " + idSessions)
+				return nil
+			}
+
+			fmt.Println("Invalid format")
 			return nil
+
 		},
 	}
 
