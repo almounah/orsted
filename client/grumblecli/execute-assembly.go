@@ -22,31 +22,31 @@ func fileExists(path string) bool {
 	return err == nil
 }
 
-
 func SetAssembluExecCommand(conn grpc.ClientConnInterface) {
 	assemblyExecCmd := &grumble.Command{
 		Name: "execute-assembly",
-		Help: "Load and Execute NET Assembly with donut",
+		Help: "Load and Execute Exe with donut",
 		Flags: func(f *grumble.Flags) {
 			f.String("m", "method", "1", "Method to load Assembly")
 			f.String("p", "process", "C:\\Windows\\System32\\notepad.exe", "Sacrificial Process")
+			f.Bool("b", "background", false, "If specified, run process in background without waiting for output. Usefull when migrating or using Potatoes.")
 		},
 		Args: func(f *grumble.Args) {
 			f.String("file", "Assembly to load")
 			f.StringList("args", "Argument of the Assembly")
 		},
 		Completer: func(prefix string, args []string) []string {
-			batcaveSuggestion := GetListOfGadgetName("exe") 
+			batcaveSuggestion := GetListOfGadgetName("exe")
 			batcaveSuggestion = append(batcaveSuggestion, GetListOfGadgetName("dotnet")...)
 			var suggestions []string
 
-            var modulesList []string
-            if len(args) == 0 {
-                modulesList = batcaveSuggestion
-            }
+			var modulesList []string
+			if len(args) == 0 {
+				modulesList = batcaveSuggestion
+			}
 			for _, moduleName := range modulesList {
 				if strings.HasPrefix(moduleName, prefix) {
-					suggestions = append(suggestions, moduleName + ".exe")
+					suggestions = append(suggestions, moduleName+".exe")
 				}
 			}
 			return suggestions
@@ -70,7 +70,10 @@ func SetAssembluExecCommand(conn grpc.ClientConnInterface) {
 				pathOfExe = Conf.NetAssemblyPath + assemblyName
 			}
 			if !fileExists(pathOfExe) {
-				fmt.Println("File not found in ", pathOfExe)
+				pathOfExe = "./" + assemblyName
+			}
+			if !fileExists(pathOfExe) {
+				fmt.Println("File not found. Double check file is present either in ./ or ", Conf.ExePath, " or ", Conf.NetAssemblyPath, " .")
 				return nil
 			}
 
@@ -93,7 +96,14 @@ func SetAssembluExecCommand(conn grpc.ClientConnInterface) {
 				fmt.Println("Error Occured ", err.Error())
 				return nil
 			}
-			res, err := clientrpc.AddTaskFunc(conn, SelectedSession.Id, "execute-assembly "+c.Flags.String("method")+ " " + c.Flags.String("process"), b, fmt.Sprintf("execute-assembly --method %s --process %s %s %s", c.Flags.String("method"), c.Flags.String("process"), assemblyName, assemblyArgs))
+
+			background := "not-background"
+			if c.Flags.Bool("background") {
+				background = "background"
+			}
+
+			command := fmt.Sprintf("execute-assembly %s %s %s", c.Flags.String("method"), c.Flags.String("process"), background)
+			res, err := clientrpc.AddTaskFunc(conn, SelectedSession.Id, command, b, fmt.Sprintf("execute-assembly --method %s --process %s %s %s", c.Flags.String("method"), c.Flags.String("process"), assemblyName, assemblyArgs))
 			if err != nil {
 				fmt.Println("Error Occured ", err.Error())
 				return nil
@@ -109,7 +119,6 @@ func SetAssembluExecCommand(conn grpc.ClientConnInterface) {
 			return nil
 		},
 	}
-
 
 	app.AddCommand(assemblyExecCmd)
 }
