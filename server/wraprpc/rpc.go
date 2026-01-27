@@ -190,3 +190,8 @@ func (s* Server) AddRevPortFwd(c context.Context, r *orstedrpc.RevPortFwdReq) (*
 	
 	return nil, nil
 }
+
+func (s* Server) DeleteRevPortFwd(c context.Context, r *orstedrpc.Route) (*orstedrpc.ResultMessage, error) {
+
+	return nil, autoroute.DeletePortFwdFromRoute(r.BeaconId, r.Rportfwd)
+}

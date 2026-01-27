@@ -3,6 +3,7 @@ package autoroute
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"net"
 	"strconv"
@@ -14,6 +15,7 @@ import (
 )
 
 type RPortForward struct {
+	Id        int32
 	RemoteSrc string
 	LocalDst  string
 }
@@ -113,15 +115,17 @@ func NewEmptyRouteForReverseForward(beaconId string, remoteSrc, localDst string)
 	r.RouteId = strconv.Itoa(len(ROUTE_LIST) + 1)
 	r.BeaconId = beaconId
 	r.Subnet = []string{}
-	r.ForwardedPort = []RPortForward{RPortForward{RemoteSrc: remoteSrc, LocalDst: localDst}}
+	rportfwd := RPortForward{RemoteSrc: remoteSrc, LocalDst: localDst}
+	r.ForwardedPort = []*RPortForward{&rportfwd}
 	r.Active = false
 	ROUTE_LIST = append(ROUTE_LIST, &r)
 }
 
-func (r *Route) SendInstructionToRPortFwd(remoteSrc, localDst string) error {
+// Returning the ID from the beacon is needed to stop the listener later
+func (r *Route) SendInstructionToRPortFwd(remoteSrc, localDst string) (int32, error) {
 	conn, err := r.Session.Open()
 	if err != nil {
-		return err
+		return -1, err
 	}
 
 	ligoloProtocol := protocol.NewEncoderDecoder(conn)
@@ -129,19 +133,28 @@ func (r *Route) SendInstructionToRPortFwd(remoteSrc, localDst string) error {
 	// Request to open a new port on the agent
 	listenerPacket := protocol.ListenerRequestPacket{Address: remoteSrc, Network: "tcp"}
 	if err := ligoloProtocol.Encode(listenerPacket); err != nil {
-		return err
+		return -1, err
 	}
 
 	// Get response from agent
 	if err := ligoloProtocol.Decode(); err != nil {
-		return err
+		return -1, err
 	}
 	response := ligoloProtocol.Payload.(*protocol.ListenerResponsePacket)
 	if err := response.Err; err {
-		return errors.New(response.ErrString)
+		return -1, errors.New(response.ErrString)
 	}
 
+	// Add the ID to the Object in the route
+	for _, f := range r.ForwardedPort {
+		if f.RemoteSrc == remoteSrc {
+			f.Id = response.ListenerID
+			break
+		}
+		
+	}
 	proxyListener := LigoloListener{ID: response.ListenerID, sess: r.Session, Conn: conn, addr: remoteSrc, network: "tcp", to: localDst}
+		
 
 	go func() {
 		err := proxyListener.relayTCP()
@@ -153,5 +166,55 @@ func (r *Route) SendInstructionToRPortFwd(remoteSrc, localDst string) error {
 		logrus.WithFields(logrus.Fields{"id": r.BeaconId}).Warning("Listener ended without error.")
 		return
 	}()
+	return response.ListenerID, nil
+}
+
+func (r *Route) DeletePortFwdFromRoute(remoteSrc string) error {
+	// Find the Id
+	var toDelete *RPortForward
+	for _, f := range r.ForwardedPort {
+		if f.RemoteSrc == remoteSrc {
+			toDelete = f
+			break
+		}
+		
+	}
+
+	if toDelete == nil {
+		return fmt.Errorf("Could not find rportfwd object ID. Check you specified correct remote src when attempting to delete")
+	}
+
+	// Open Yamux connection
+	yamuxConnectionSession, err := r.Session.Open()
+	if err != nil {
+		return err
+	}
+
+	ligoloProtocol := protocol.NewEncoderDecoder(yamuxConnectionSession)
+
+	// Send close request
+	closeRequest := protocol.ListenerCloseRequestPacket{ListenerID: toDelete.Id}
+	if err := ligoloProtocol.Encode(closeRequest); err != nil {
+		return err
+	}
+
+	// Process close response
+	if err := ligoloProtocol.Decode(); err != nil {
+		return err
+
+	}
+
+	if err := ligoloProtocol.Payload.(*protocol.ListenerCloseResponsePacket).Err; err != false {
+		return errors.New(ligoloProtocol.Payload.(*protocol.ListenerCloseResponsePacket).ErrString)
+	}
+
+	for i, rport := range r.ForwardedPort {
+		if rport.Id == toDelete.Id {
+			// Remove the element at index i
+			r.ForwardedPort = append(r.ForwardedPort[:i], r.ForwardedPort[i+1:]...)
+			break
+		}
+	}
+
 	return nil
 }

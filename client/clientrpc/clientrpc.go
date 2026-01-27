@@ -149,3 +149,11 @@ func AddRouteForRevPortFwd(conn grpc.ClientConnInterface, beaconId string, remot
     return res, err
 }
 
+func DeleteRevPortFwd(conn grpc.ClientConnInterface, beaconId string, remoteSrc string) (*orstedrpc.ResultMessage, error) {
+	c := orstedrpc.NewOrstedRpcClient(conn)
+	ctx, _ := context.WithTimeout(context.Background(), time.Second)
+
+	// Sending remoteSrc in RportFwd --> not the cleanest way to do
+    res, err := c.DeleteRevPortFwd(ctx, &orstedrpc.Route{BeaconId: beaconId, Rportfwd: remoteSrc})
+    return res, err
+}

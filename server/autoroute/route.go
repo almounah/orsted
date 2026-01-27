@@ -22,7 +22,7 @@ import (
 type Route struct {
 	RouteId       string
 	Subnet        []string
-	ForwardedPort []RPortForward
+	ForwardedPort []*RPortForward
 	BeaconId      string
 	ProxyConn     net.Conn
 	Session       *yamux.Session
@@ -79,7 +79,7 @@ func ActivateRoute(beaconId string, wsConn net.Conn) error {
 
 	// Start revportfwd if the route was create for that. In that case r.ForwardedPort will contain the only Port to rev forward
 	if len(r.ForwardedPort) == 1 {
-		err = r.SendInstructionToRPortFwd(r.ForwardedPort[0].RemoteSrc, r.ForwardedPort[0].LocalDst)
+		_, err = r.SendInstructionToRPortFwd(r.ForwardedPort[0].RemoteSrc, r.ForwardedPort[0].LocalDst)
 		if err != nil {
 			r.StopRoute()
 			return err
