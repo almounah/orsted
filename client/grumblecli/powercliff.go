@@ -119,7 +119,7 @@ func SetPowercliffCommand(conn grpc.ClientConnInterface) {
 				res.TaskId,
 				res.BeacondId,
 				res.State,
-				string(res.Command),
+				string(res.PrettyCommand),
 			})
 			prettyPrint(data, []string{"TASKID", "SESSIONID", "STATE", "COMMAND"}, c.App.Stdout())
 			return nil

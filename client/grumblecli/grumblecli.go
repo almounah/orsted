@@ -19,11 +19,22 @@ var app = grumble.New(&grumble.Config{
 
 var SelectedSession *orstedrpc.Session = nil
 
+func truncate(s string, n int) string {
+	if len(s) <= n {
+		return s
+	}
+	return s[:n] + "..."
+}
+
 func prettyPrint(data [][]string, headers []string, out io.Writer) {
 	table := tablewriter.NewWriter(out)
 	table.SetHeader(headers)
-	for _, v := range data {
-		table.Append(v)
+	for _, stringList := range data {
+		var truncatedStringList []string 
+		for _, st := range stringList {
+			truncatedStringList = append(truncatedStringList, truncate(st, 100))
+		}
+		table.Append(truncatedStringList)
 	}
 	table.Render()
 }
@@ -90,6 +101,8 @@ func addSingleCommandFromString(commandString string, conn grpc.ClientConnInterf
 		SetBatcaveCommands(conn)
 	case "silph":
 		SetSilphCommand(conn)
+	case "rportfwd":
+		SetRportFwdCommand(conn)
 	case "help":
 		// Use default grumble help
 		return

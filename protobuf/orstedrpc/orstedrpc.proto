@@ -113,10 +113,17 @@ message RouteReq {
     string subnet = 2;
 }
 
+message RevPortFwdReq {
+    string beaconId = 1;
+    string remoteSrc = 2;
+    string localDst = 3;
+}
+
 message Route {
     string RouteId = 1;
     string beaconId = 2;
     string subnet = 3;
+    string rportfwd = 4;
 }
 
 message RouteList {
@@ -151,6 +158,9 @@ service OrstedRpc {
     rpc AddRoute(RouteReq) returns (Route);
     rpc DeleteRoute(Route) returns (ResultMessage);
     rpc ListRoute(EmptyMessage) returns (RouteList);
+
+    rpc AddRevPortFwd(RevPortFwdReq) returns (Route);
+    rpc DeleteRevPortFwd(Route) returns (ResultMessage);
 }
 
 message Envelope {

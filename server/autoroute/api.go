@@ -42,6 +42,12 @@ func ListRoute() *orstedrpc.RouteList {
 		route.RouteId = c.RouteId
 		route.BeaconId = c.BeaconId
 		route.Subnet = strings.Join(c.Subnet, ", ")
+		// Pretty Print Forwarded Port
+		var RportfwdString []string 
+		for i := 0; i < len(c.ForwardedPort); i++ {
+			RportfwdString = append(RportfwdString, c.ForwardedPort[i].LocalDst + "<->" + c.ForwardedPort[i].RemoteSrc)
+		}
+		route.Rportfwd = strings.Join(RportfwdString, ", ")
 		ListOfRoute = append(ListOfRoute, &route)
 	}
 
@@ -64,7 +70,57 @@ func DeleteSubnetRoute(beaconId, subnet string) error {
 	if err != nil {
 		return err
 	}
-	if len(r.Subnet) == 0 {
+	if len(r.Subnet) == 0 && len(r.ForwardedPort) == 0 {
+		r.StopRoute()
+	}
+	return nil
+	
+}
+
+func AddReversePortForwardInRoute(beacondId string, remoteSrc, localDst string) error {
+	// Check if route already exists
+	var r *Route
+	for _, c := range ROUTE_LIST {
+		if c.BeaconId == beacondId {
+			r = c
+		}
+	}
+
+	// If it is just send the command to Rev PortForward
+	if r != nil {
+		id, err := r.SendInstructionToRPortFwd(remoteSrc, localDst)
+		if err != nil {
+			fmt.Println("Error ", err)
+			return err
+		}
+		revPortFwd := RPortForward{Id: id, RemoteSrc: remoteSrc, LocalDst: localDst}
+		r.ForwardedPort = append(r.ForwardedPort, &revPortFwd)
+		return fmt.Errorf("Beacon already ligoloing, will instruct to rportfwd")
+	}
+
+	// Otherwise create Empty Route that will be populated if Websocket Success
+	NewEmptyRouteForReverseForward(beacondId, remoteSrc, localDst)
+	
+
+	return nil
+}
+
+
+func DeletePortFwdFromRoute(beaconId, remoteSrc string) error {
+	var r *Route
+	for _, c := range ROUTE_LIST {
+		if c.BeaconId == beaconId {
+			r = c
+		}
+	}
+	if r == nil {
+		return fmt.Errorf("Beacon Not found in list of route, maybe it died")
+	}
+	err := r.DeletePortFwdFromRoute(remoteSrc)
+	if err != nil {
+		return err
+	}
+	if len(r.Subnet) == 0 && len(r.ForwardedPort) == 0 {
 		r.StopRoute()
 	}
 	return nil

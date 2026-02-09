@@ -43,9 +43,9 @@ func SetAutorouteCommand(conn grpc.ClientConnInterface) {
 			}
 			var data [][]string
 			for i := 0; i < len(res.Routes); i++ {
-				data = append(data, []string{res.Routes[i].RouteId, res.Routes[i].BeaconId, res.Routes[i].Subnet})
+				data = append(data, []string{res.Routes[i].RouteId, res.Routes[i].BeaconId, res.Routes[i].Subnet, res.Routes[i].Rportfwd})
 			}
-			prettyPrint(data, []string{"ROUTE ID", "BEACON ID", "SUBNET"}, c.App.Stdout())
+			prettyPrint(data, []string{"ROUTE ID", "BEACON ID", "SUBNET", "RPORTFWD (Local <-> Remote)"}, c.App.Stdout())
 			return nil
 		},
 	}
@@ -54,7 +54,7 @@ func SetAutorouteCommand(conn grpc.ClientConnInterface) {
 		Help: "delete route subnet. If route subnet becomes empty, delete route o the fly.",
 		Args: func(a *grumble.Args) {
 			a.String("beaconId", "Beacon affected by route")
-			a.String("subnet", "subnet to be routed through beacon")
+			a.String("remoteSrc", "remote address of the listener on the beacon")
 		},
 		Run: func(c *grumble.Context) error {
 			_, err := clientrpc.DeleteRoute(conn, c.Args.String("beaconId"), c.Args.String("subnet"))

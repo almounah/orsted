@@ -171,3 +171,27 @@ func (s* Server) DeleteRoute(c context.Context, r *orstedrpc.Route) (*orstedrpc.
 func (s* Server) ListRoute(c context.Context, e *orstedrpc.EmptyMessage) (*orstedrpc.RouteList, error) {
 	return autoroute.ListRoute(), nil
 }
+
+func (s* Server) AddRevPortFwd(c context.Context, r *orstedrpc.RevPortFwdReq) (*orstedrpc.Route, error) {
+
+
+	err := autoroute.AddReversePortForwardInRoute(r.BeaconId, r.RemoteSrc, r.LocalDst)
+	if err != nil {
+		fmt.Println("Error Adding Route ", err)
+		return nil, err
+	}
+
+	var t orstedrpc.TaskReq
+	t.BeacondId = r.BeaconId
+	t.Command = "autoroute"
+	t.PrettyCommand = "Automatic Command: Autoroute"
+
+	s.AddTask(c, &t)
+	
+	return nil, nil
+}
+
+func (s* Server) DeleteRevPortFwd(c context.Context, r *orstedrpc.Route) (*orstedrpc.ResultMessage, error) {
+
+	return nil, autoroute.DeletePortFwdFromRoute(r.BeaconId, r.Rportfwd)
+}

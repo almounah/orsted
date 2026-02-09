@@ -141,3 +141,19 @@ func DeleteRoute(conn grpc.ClientConnInterface, beaconId string, subnet string) 
     res, err := c.DeleteRoute(ctx, &orstedrpc.Route{BeaconId: beaconId, Subnet: subnet})
     return res, err
 }
+
+func AddRouteForRevPortFwd(conn grpc.ClientConnInterface, beaconId string, remoteSrc string, localDst string) (*orstedrpc.Route, error) {
+	c := orstedrpc.NewOrstedRpcClient(conn)
+	ctx, _ := context.WithTimeout(context.Background(), time.Second)
+    res, err := c.AddRevPortFwd(ctx, &orstedrpc.RevPortFwdReq{BeaconId: beaconId, RemoteSrc: remoteSrc, LocalDst: localDst})
+    return res, err
+}
+
+func DeleteRevPortFwd(conn grpc.ClientConnInterface, beaconId string, remoteSrc string) (*orstedrpc.ResultMessage, error) {
+	c := orstedrpc.NewOrstedRpcClient(conn)
+	ctx, _ := context.WithTimeout(context.Background(), time.Second)
+
+	// Sending remoteSrc in RportFwd --> not the cleanest way to do
+    res, err := c.DeleteRevPortFwd(ctx, &orstedrpc.Route{BeaconId: beaconId, Rportfwd: remoteSrc})
+    return res, err
+}

