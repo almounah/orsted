@@ -38,15 +38,21 @@ func SetAssembluExecCommand(conn grpc.ClientConnInterface) {
 		Completer: func(prefix string, args []string) []string {
 			batcaveSuggestion := GetListOfGadgetName("exe")
 			batcaveSuggestion = append(batcaveSuggestion, GetListOfGadgetName("dotnet")...)
+			flagsSuggestion := []string{"-b", "-m", "-p", "--background", "--process", "--method"}
 			var suggestions []string
 
 			var modulesList []string
 			if len(args) == 0 {
 				modulesList = batcaveSuggestion
-			}
-			for _, moduleName := range modulesList {
-				if strings.HasPrefix(moduleName, prefix) {
-					suggestions = append(suggestions, moduleName+".exe")
+				for _, moduleName := range modulesList {
+					if strings.HasPrefix(moduleName, prefix) {
+						suggestions = append(suggestions, moduleName+".exe")
+					}
+				}
+				for _, flagName := range flagsSuggestion {
+					if strings.HasPrefix(flagName, prefix) {
+						suggestions = append(suggestions, flagName)
+					}
 				}
 			}
 			return suggestions
