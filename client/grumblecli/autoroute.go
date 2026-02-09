@@ -54,7 +54,7 @@ func SetAutorouteCommand(conn grpc.ClientConnInterface) {
 		Help: "delete route subnet. If route subnet becomes empty, delete route o the fly.",
 		Args: func(a *grumble.Args) {
 			a.String("beaconId", "Beacon affected by route")
-			a.String("remoteSrc", "remote address of the listener on the beacon")
+			a.String("subnet", "subnet to be routed through beacon")
 		},
 		Run: func(c *grumble.Context) error {
 			_, err := clientrpc.DeleteRoute(conn, c.Args.String("beaconId"), c.Args.String("subnet"))
